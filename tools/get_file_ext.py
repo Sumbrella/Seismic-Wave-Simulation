@@ -1,4 +1,5 @@
-import os 
+import os
 
-def getFileExt(path):
+
+def get_file_ext(path):
     return os.path.splitext(path)[1]

@@ -42,12 +42,12 @@ print(mcfg)
 
 s = Source(nx//2, nz//2, lambda t: 0, get_ricker(fm))
 
-m = Medium.getMedium(mcfg)
-m.initByVal(
+m = Medium.get_medium(mcfg)
+m.init_by_val(
     rho, C11, C12
 )
 
-b = Boundary.getBoundary("solid")
+b = Boundary.get_boundary("solid")
 b.set_parameter(nx, nz, 0, 0)
 
 # b = Boundary.getBoundary("atten")

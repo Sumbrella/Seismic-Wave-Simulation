@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils.boundary import Boundary
 
-bound = Boundary.getBoundary("atten")
+bound = Boundary.get_boundary("atten")
 
 field = np.ones((100, 100))
 

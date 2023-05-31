@@ -8,13 +8,15 @@ from utils.seismic_simulator import SeismicSimulator
 from tools.plot_frame import plot_frame
 from utils.sfd2 import SFD
 
+
 def wave_loop(
-    s:SeismicSimulator,
-    save_times: Union[List[float], int],
-    is_show:bool=True,
-    vmin:float=None,
-    vmax:float=None,
-    **kwargs,
+        s: SeismicSimulator,
+        save_times: Union[List[float], int],
+        is_show: bool = True,
+        is_save: bool = True,
+        vmin: float = None,
+        vmax: float = None,
+        **kwargs,
 ) -> List[SFD]:
     nt = int(s.endt / s.dt)
 
@@ -32,27 +34,34 @@ def wave_loop(
         save_times = np.asarray(save_times)
 
     print("target frame to save:", save_times)
-    # cover save tiems into index 
+    # cover save times into index
     save_time_index = (save_times / s.dt).astype(int)
     save_time_index = save_time_index[save_time_index < nt]
 
-
     start_time = time.time()
-    
-    Ux = np.zeros((len(save_time_index), s.medium.cfg.nz, s.medium.cfg.nx))
-    Uz = np.zeros((len(save_time_index), s.medium.cfg.nz, s.medium.cfg.nx))
+
+    if is_save:
+        ux = np.zeros((len(save_time_index), s.medium.cfg.nz, s.medium.cfg.nx))
+        uz = np.zeros((len(save_time_index), s.medium.cfg.nz, s.medium.cfg.nx))
+    else:
+        ux = None
+        uz = None
 
     j = 0
     for i in range(nt):
         s.forward()
-        print("\rSimulation Process: time:{:.3f}s, runtime:{:.3f}s".format(s.current_t, time.time() - start_time), end="")
-        
+        print("\rSimulation Process: time:{:.3f}s, runtime:{:.3f}s".format(s.current_t, time.time() - start_time),
+              end="")
+
         if j < len(save_time_index) and i == save_time_index[j]:
-            Ux[j] = s.ux
-            Uz[j] = s.uz
+            if is_save:
+                ux[j] = s.ux
+                uz[j] = s.uz
             j += 1
 
             if is_show:
+                plt.figure(figsize=(9, 4))
+
                 plt.subplot(121)
                 if vmin is None or vmax is None:
                     plot_frame(s.ux, vmin=-np.percentile(s.ux, 99) * 10, vmax=np.percentile(s.ux, 99) * 10, **kwargs)
@@ -64,31 +73,34 @@ def wave_loop(
                     plot_frame(s.uz, vmin=-np.percentile(s.uz, 99) * 10, vmax=np.percentile(s.uz, 99) * 10, **kwargs)
                 else:
                     plot_frame(s.uz, vmin=vmin, vmax=vmax, **kwargs)
-                
+
                 plt.pause(1e-3)
                 plt.cla()
                 plt.clf()
     print("\nSimulation Done!")
 
-    sfdx = SFD(
-        xmin=s.medium.cfg.xmin,
-        xmax=s.medium.cfg.xmax,
-        zmin=s.medium.cfg.zmin,
-        zmax=s.medium.cfg.zmax,
-        ts=save_times,
-        U=Ux
-    )
+    if is_save:
+        sfdx = SFD(
+            xmin=s.medium.cfg.xmin,
+            xmax=s.medium.cfg.xmax,
+            zmin=s.medium.cfg.zmin,
+            zmax=s.medium.cfg.zmax,
+            ts=save_times,
+            U=ux
+        )
 
-    # sfdx.save_txt(save_xfile_name)
+        # sfdx.save_txt(save_xfile_name)
 
-    sfdz = SFD(
-        xmin=s.medium.cfg.xmin,
-        xmax=s.medium.cfg.xmax,
-        zmin=s.medium.cfg.zmin,
-        zmax=s.medium.cfg.zmax,
-        ts=save_times,
-        U=Uz
-    )
+        sfdz = SFD(
+            xmin=s.medium.cfg.xmin,
+            xmax=s.medium.cfg.xmax,
+            zmin=s.medium.cfg.zmin,
+            zmax=s.medium.cfg.zmax,
+            ts=save_times,
+            U=uz
+        )
 
     # sfdz.save_txt(save_zfile_name)
-    return sfdx, sfdz
+        return sfdx, sfdz
+    else:
+        return None, None

@@ -68,15 +68,15 @@ print(mcfg)
 
 s = Source(nx//2, nz//2, get_ricker(fm), lambda t:0)
 
-m = Medium.getMedium(mcfg)
-m.initByVal(
+m = Medium.get_medium(mcfg)
+m.init_by_val(
     rho, C11, C13, C33, C55
 )
 
 # b = Boundary.getBoundary("solid")
 # b.set_parameter(nx, nz, 0, 0)
 
-b = Boundary.getBoundary("atten")
+b = Boundary.get_boundary("atten")
 b.set_parameter(nx, nz, 20, 20, 0.005)
     
 simulator = SeismicSimulator(m, s, b, dt, tmax)
