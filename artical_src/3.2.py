@@ -1,0 +1,91 @@
+import matplotlib.pyplot as plt
+
+from examples.wave_loop import wave_loop
+from utils.seismic_simulator import *
+from utils.boundary import Boundary
+from utils.medium_config import MediumConfig
+from utils.medium import Medium
+
+def get_ricker(fm):
+    def ricker(t, dt=0):
+        return (1 - 2 * (np.pi * fm * (t-dt))**2) * np.exp(-(fm * np.pi* (t-dt))**2)
+    return ricker
+    
+## parameters
+xmin, xmax = 0, 1280
+zmin, zmax = 0, 1280
+tmin, tmax = 0, 0.3
+dx, dz, dt = 4, 4, 2e-4
+fm = 40
+
+X = np.arange(xmin, xmax, dx)
+Z = np.arange(zmin, zmax, dz)
+X, Z = np.meshgrid(X, Z)
+
+nt = int(tmax / dt)
+dframe = 50
+nframe = nt // dframe
+
+nx = int((xmax - xmin) / dx)
+nz = int((zmax - zmin) / dz)
+
+C11 = 15625000 * np.ones((nx, nz))
+C12 = 4225000 * np.ones((nx, nz))
+rho = 2.5 * np.ones((nx, nz))
+
+C11[Z>=800] = 32400000
+C12[Z>=800] = 11664000
+rho[Z>=800] = 3.6
+
+mcfg = MediumConfig(
+    xmin,
+    xmax,
+    dx,
+    zmin,
+    zmax,
+    dz,
+    'I'
+)
+
+print(mcfg)
+
+
+s = Source(nx//2, nz//2, get_ricker(fm), get_ricker(fm))
+
+m = Medium.getMedium(mcfg)
+m.initByVal(
+    rho, C11, C12
+)
+
+b = Boundary.getBoundary("solid")
+b.set_parameter(nx, nz, 0, 0)
+
+# b = Boundary.getBoundary("atten")
+# b.set_parameter(nx, nz, 60, 60, 0.0018)
+    
+simulator = SeismicSimulator(m, s, b, dt, tmax)
+
+datax, dataz = wave_loop(
+    simulator,
+    [0.08, 0.2],
+    is_show=False
+)
+
+datax.save_txt("../data/exp/3_2x.sfd")
+dataz.save_txt("../data/exp/3_2z.sfd")
+
+plt.subplot(121)
+datax.plot_frame(0)
+
+plt.subplot(122)
+dataz.plot_frame(0)
+
+plt.show()
+
+plt.subplot(121)
+datax.plot_frame(1)
+
+plt.subplot(122)
+dataz.plot_frame(1)
+
+plt.show()
