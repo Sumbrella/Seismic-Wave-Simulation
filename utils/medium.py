@@ -1,112 +1,110 @@
 import os
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractmethod
 
 from tools.psm import *
-from tools.get_file_ext import getFileExt
-from utils.medium_config import MediumConfig
-
+from tools import check_file_exists, get_file_ext
 from .medium_config import MediumConfig
 
 
 class Medium(ABC):
     @classmethod
-    def getMedium(cls, cfg:MediumConfig):
-        if cfg.mediumType == 'I':
+    def get_medium(cls, cfg: MediumConfig):
+        if cfg.medium_type == 'I':
             return IMedium(cfg)
-        elif cfg.mediumType == 'VTI':
+        elif cfg.medium_type == 'VTI':
             return VTIMedium(cfg)
-        elif cfg.mediumType == 'HTI':
+        elif cfg.medium_type == 'HTI':
             return HTIMedium(cfg)
         else:
             ValueError("medium type does not support.")
-    
-    def __init__(self, cfg:MediumConfig):
+
+    def __init__(self, cfg: MediumConfig, *args, **kwargs):
         self.cfg = cfg
         self.rho = []
-        self.vps = []
-        self.vss = []
-    
-    @abstractclassmethod
-    def loadFile(self, filename, *args):
+        self.required_c = []
+        self.vpmax = None
+        self.vsmax = None
+        self.c11 = None
+        self.c44 = None
+
+    @abstractmethod
+    def load_file(self, *args):
         pass
 
-    @abstractclassmethod
-    def initByVal(self, *args):
+    @abstractmethod
+    def init_by_val(self, *args):
         pass
 
-    @abstractclassmethod
-    def initByFun(self, *args):
+    @abstractmethod
+    def calculate_step_value(self, ux, uz, method='psm'):
         pass
 
-    @abstractclassmethod
-    def calculateStepValue(self, ux, uz, method='psm'):
-        pass
-
-    def _check_file_exists(self, filename):
-        assert os.path.exists(filename), f"{filename} file doesn't find."
-
-    def _check_C_shape(self, C, Cname:str):
-        assert len(C.shape) == 2, f"Input {Cname} dimension is {len(C.shape)}, not 2D."
-        assert C.shape == self.cfg.shape, f"Input {Cname} shape is {C.shape} not match the medium shape {self.cfg.shape}"
-    
-
-
-class IMedium(Medium):
-    def __init__(self, cfg:MediumConfig, *arg, **kwargs):
-        super(IMedium, self).__init__(cfg, *arg, **kwargs)
-
-    def loadFile(self, rhoFile: str, C11File:str, C12File:str, *args):
-        self._check_file_exists(C11File)
-        self._check_file_exists(C12File)
-        self._check_file_exists(rhoFile)
-
-        Cs = []
-        for file in [rhoFile, C11File, C12File]:
-            ext = getFileExt(file)
-            if ext == '.txt':
-                C = np.loadtxt(file)
-            elif ext == '.npy':
-                C = np.load(file)
-            else:
-                TypeError(f"file extension {ext} don't support. ")
-            Cs.append(C)
-
-        rho, C11, C12 = C
-        self.initByVal(rho, C11, C12)
-
-    def initByVal(self, rho, C11, C12): 
-        # C11 = \lambda + 2\mu   C12 = \lambda  C44 = \mu
-        rho = np.asarray(rho)
-        C11 = np.asarray(C11)
-        C12 = np.asarray(C12)
-
-        self._check_C_shape(rho, "rho")
-        self._check_C_shape(C11, "C11")
-        self._check_C_shape(C12, "C12")
-
-        self.C11 = C11
-        self.C12 = C12
-        self.C44 = (self.C11 - self.C12) / 2
-        self.rho = rho
-
-        self.vpmax = np.max(np.sqrt(self.C11 / self.rho))
-        self.vsmax = np.max(np.sqrt(self.C44 / self.rho))
+    def check_speed(self):
+        self.vpmax = np.max(np.sqrt(self.c11 / self.rho))
+        self.vsmax = np.max(np.sqrt(self.c44 / self.rho))
 
         print("Max P veclocity of this medium is: {:.3f}".format(self.vpmax))
         print("Max S veclocity of this medium is: {:.3f}".format(self.vsmax))
-    
-    def initByFun(self):
-        pass # TODO:
-    
-    def calculateStepValue(self, ux, uz, method='psm'):
+
+    def _check_c_shape(self, c: np.ndarray, cname: str):
+        assert len(c.shape) == 2, f"Input {cname} dimension is {len(c.shape)}, not 2D."
+        assert c.shape == self.cfg.shape, f"Input {cname} shape is {c.shape} not match the medium shape {self.cfg.shape}"
+
+
+class IMedium(Medium):
+    def __init__(self, cfg: MediumConfig, *arg, **kwargs):
+        super(IMedium, self).__init__(cfg, *arg, **kwargs)
+        self.c11 = None
+        self.c12 = None
+        self.c44 = None
+        self.required_c = ["c11", "c12"]
+
+    def load_file(self, rho_file: str, c11_file: str, c12_file: str, *args):
+        check_file_exists(c11_file)
+        check_file_exists(c12_file)
+        check_file_exists(rho_file)
+
+        cs = []
+        for file in [rho_file, c11_file, c12_file]:
+            ext = get_file_ext(file)
+            if ext == '.txt':
+                c = np.loadtxt(file)
+            elif ext == '.npy':
+                c = np.load(file)
+            else:
+                TypeError(f"file extension {ext} don't support. ")
+                break
+            cs.append(c)
+
+        rho, c11, c12 = cs
+        self.init_by_val(rho, c11, c12)
+
+    def init_by_val(self, rho, c11, c12):
+        # C11 = \lambda + 2\mu   C12 = \lambda  C44 = \mu
+        rho = np.asarray(rho)
+        c11 = np.asarray(c11)
+        c12 = np.asarray(c12)
+
+        self._check_c_shape(rho, "rho")
+        self._check_c_shape(c11, "C11")
+        self._check_c_shape(c12, "C12")
+
+        self.rho = rho
+        self.c11 = c11
+        self.c12 = c12
+        self.c44 = (self.c11 - self.c12) / 2
+
+        self.check_speed()
+
+    def calculate_step_value(self, ux, uz, method='psm'):
         return np.asarray(
             [
-                self.C11 * cal_psm_ddx(ux, self.cfg.kx) +\
-                (self.C12 + self.C44) * cal_psm_dz(cal_psm_dx(uz, self.cfg.kx), self.cfg.kz) +\
-                self.C44 * cal_psm_ddz(ux, self.cfg.kz), 
-                self.C11  * cal_psm_ddz(uz, self.cfg.kz) +\
-                (self.C12 + self.C44) * cal_psm_dz(cal_psm_dx(ux, self.cfg.kx), self.cfg.kz) +\
-                self.C44 * cal_psm_ddx(uz, self.cfg.kx)
+                self.c11 * cal_psm_ddx(ux, self.cfg.kx) +
+                (self.c12 + self.c44) * cal_psm_dz(cal_psm_dx(uz, self.cfg.kx), self.cfg.kz) +
+                self.c44 * cal_psm_ddz(ux, self.cfg.kz),
+                self.c11 * cal_psm_ddz(uz, self.cfg.kz) +
+                (self.c12 + self.c44) * cal_psm_dz(cal_psm_dx(ux, self.cfg.kx), self.cfg.kz) +
+                self.c44 * cal_psm_ddx(uz, self.cfg.kx)
             ]
         )
 
@@ -114,39 +112,33 @@ class IMedium(Medium):
 class VTIMedium(Medium):
     def __init__(self, cfg: MediumConfig, *args, **kwargs):
         super().__init__(cfg, *args, **kwargs)
-    
-    def loadFile(self):
-        pass #TODO
+        self.required_c = ["c11", "c12", "c33", "c44"]
 
-    def initByVal(self, rho, C11, C13, C33, C44):
+    def load_file(self):
+        pass  # TODO
+
+    def init_by_val(self, rho, c11, c12, c33, c44):
         rho = np.asarray(rho)
-        C11 = np.asarray(C11)
-        C13 = np.asarray(C13)
-        C33 = np.asarray(C33)
-        C44 = np.asarray(C44)
+        c11 = np.asarray(c11)
+        c12 = np.asarray(c12)
+        c33 = np.asarray(c33)
+        c44 = np.asarray(c44)
 
-        self._check_C_shape(rho, "rho")
-        self._check_C_shape(C11, "C11")
-        self._check_C_shape(C13, "C13")
-        self._check_C_shape(C33, "C33")
-        self._check_C_shape(C44, "C44")
+        self._check_c_shape(rho, "rho")
+        self._check_c_shape(c11, "C11")
+        self._check_c_shape(c12, "C13")
+        self._check_c_shape(c33, "C33")
+        self._check_c_shape(c44, "C44")
 
         self.rho = rho
-        self.C11 = C11
-        self.C13 = C13
-        self.C33 = C33
-        self.C44 = C44
+        self.c11 = c11
+        self.c12 = c12
+        self.c33 = c33
+        self.c44 = c44
 
-        self.vpmax = np.max(np.sqrt(self.C11 / self.rho))
-        self.vsmax = np.max(np.sqrt(self.C44 / self.rho))
+        self.check_speed()
 
-        print("Max P veclocity of this medium is: {:.3f}".format(self.vpmax))
-        print("Max S veclocity of this medium is: {:.3f}".format(self.vsmax))
-
-    def initByFun(self):
-        pass
-
-    def calculateStepValue(self, ux, uz, method='psm'):
+    def calculate_step_value(self, ux, uz, method='psm'):
         # return np.array([
         #     self.C11 * cal_psm_ddx(ux, self.cfg.kx) + 
         #     (self.C13 + self.C66) * cal_psm_dz(cal_psm_dx(uz, self.cfg.kx), self.cfg.kz) +
@@ -156,53 +148,47 @@ class VTIMedium(Medium):
         #     self.C33 * cal_psm_ddz(uz, self.cfg.kz)
         # ])
         return np.array([
-            self.C11 * cal_psm_ddx(ux, self.cfg.kx) +\
-            self.C44 * cal_psm_ddz(ux, self.cfg.kz) +\
-            (self.C13 + self.C44) * cal_psm_dx(cal_psm_dz(uz, self.cfg.kz), self.cfg.kx),
+            self.c11 * cal_psm_ddx(ux, self.cfg.kx) + \
+            self.c44 * cal_psm_ddz(ux, self.cfg.kz) + \
+            (self.c12 + self.c44) * cal_psm_dx(cal_psm_dz(uz, self.cfg.kz), self.cfg.kx),
             # (self.C44 + self.C13) * cal_psm_ddx(ux, self.cfg.kx) +\
-            (self.C44 + self.C13) * cal_psm_dz(cal_psm_dx(ux, self.cfg.kx), self.cfg.kz) +\
-            self.C44 * cal_psm_ddx(uz, self.cfg.kx) +\
-            self.C33 * cal_psm_ddz(uz, self.cfg.kz)
+            (self.c44 + self.c12) * cal_psm_dz(cal_psm_dx(ux, self.cfg.kx), self.cfg.kz) + \
+            self.c44 * cal_psm_ddx(uz, self.cfg.kx) + \
+            self.c33 * cal_psm_ddz(uz, self.cfg.kz)
         ])
 
 
 class HTIMedium(Medium):
     def __init__(self, cfg: MediumConfig, *args, **kwargs):
         super().__init__(cfg, *args, **kwargs)
-    
-    def loadFile(self):
-        pass #TODO
+        self.required_c = ['c11', 'c12', 'c33', 'c55']
 
-    def initByVal(self, rho, C11, C13, C33, C55):
+    def load_file(self):
+        pass  # TODO
+
+    def init_by_val(self, rho, c11, c12, c33, c55):
         rho = np.asarray(rho)
-        C11 = np.asarray(C11)
-        C13 = np.asarray(C13)
-        C33 = np.asarray(C33)
-        C55 = np.asarray(C55)
+        c11 = np.asarray(c11)
+        c12 = np.asarray(c12)
+        c33 = np.asarray(c33)
+        c55 = np.asarray(c55)
 
-        self._check_C_shape(rho, "rho")
-        self._check_C_shape(C11, "C11")
-        self._check_C_shape(C13, "C13")
-        self._check_C_shape(C33, "C33")
-        self._check_C_shape(C55, "C55")
+        self._check_c_shape(rho, "rho")
+        self._check_c_shape(c11, "C11")
+        self._check_c_shape(c12, "C13")
+        self._check_c_shape(c33, "C33")
+        self._check_c_shape(c55, "C55")
 
         self.rho = rho
-        self.C11 = C11
-        self.C13 = C13
-        self.C33 = C33
-        self.C55 = C55
+        self.c11 = c11
+        self.c12 = c12
+        self.c33 = c33
+        self.c44 = (self.c11 - self.c12) / 2
+        self.c55 = c55
 
-        # self.C44 = (self.C33 - self.C)
-        self.vpmax = np.max(np.sqrt(self.C11 / self.rho))
-        self.vsmax = np.max(np.sqrt(self.C55 / self.rho))
+        self.check_speed()
 
-        print("Max P veclocity of this medium is: {:.3f}".format(self.vpmax))
-        print("Max S veclocity of this medium is: {:.3f}".format(self.vsmax))
-
-    def initByFun(self):
-        pass
-
-    def calculateStepValue(self, ux, uz, method='psm'):
+    def calculate_step_value(self, ux, uz, method='psm'):
         # return np.array([
         #     self.C11 * cal_psm_ddx(ux, self.cfg.kx) + 
         #     (self.C13 + self.C66) * cal_psm_dz(cal_psm_dx(uz, self.cfg.kx), self.cfg.kz) +
@@ -212,10 +198,10 @@ class HTIMedium(Medium):
         #     self.C33 * cal_psm_ddz(uz, self.cfg.kz)
         # ])
         return np.array([
-            self.C11 * cal_psm_ddx(ux, self.cfg.kx) +\
-            self.C55 * cal_psm_ddz(ux, self.cfg.kz) +\
-            (self.C13 + self.C55) * cal_psm_dx(cal_psm_dz(uz, self.cfg.kz), self.cfg.kx),
-            self.C55 * cal_psm_ddx(uz, self.cfg.kx) +\
-            (self.C13 + self.C55) * cal_psm_dx(cal_psm_dz(ux, self.cfg.kz), self.cfg.kx) +\
-            self.C33 * cal_psm_ddz(uz, self.cfg.kz)
+            self.c11 * cal_psm_ddx(ux, self.cfg.kx) +
+            self.c55 * cal_psm_ddz(ux, self.cfg.kz) +
+            (self.c12 + self.c55) * cal_psm_dx(cal_psm_dz(uz, self.cfg.kz), self.cfg.kx),
+            self.c55 * cal_psm_ddx(uz, self.cfg.kx) +
+            (self.c12 + self.c55) * cal_psm_dx(cal_psm_dz(ux, self.cfg.kz), self.cfg.kx) +
+            self.c33 * cal_psm_ddz(uz, self.cfg.kz)
         ])

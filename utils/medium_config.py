@@ -1,23 +1,24 @@
 import numpy as np
 
+
 class MediumConfig:
     def __init__(
-            self, 
-            xmin:float, xmax:float, dx:float, 
-            zmin:float, zmax:float, dz:float, 
-            mediumType:str # ['I', 'VTI', 'TTI']
-        ):
+            self,
+            xmin: float, xmax: float, dx: float,
+            zmin: float, zmax: float, dz: float,
+            medium_type: str  # ['I', 'VTI', 'TTI']
+    ):
         self.xmin = xmin
-        self.xmax = xmax 
-        self.dx   = dx
-        self.nx   = int(np.ceil((xmax - xmin) / dx))
+        self.xmax = xmax
+        self.dx = dx
+        self.nx = int(np.ceil((xmax - xmin) / dx))
 
         self.zmin = zmin
         self.zmax = zmax
-        self.dz   = dz
-        self.nz   = int(np.ceil((zmax - zmin) / dx))
-        
-        self.mediumType = mediumType
+        self.dz = dz
+        self.nz = int(np.ceil((zmax - zmin) / dx))
+
+        self.medium_type = medium_type
         self.shape = (self.nz, self.nx)
 
         self.kx = self.cal_kx()
@@ -34,7 +35,7 @@ class MediumConfig:
                 for i in range(self.nx)
             ]
         )
-    
+
     def cal_kz(self):
         # return np.fft.fftfreq(self.nz, self.dz)
         return np.array(
@@ -46,14 +47,16 @@ class MediumConfig:
         )
 
     def show_parameters(self):
-        print(self.__str__)
-    
+        print(self)
+
     def __str__(self):
         return f"""\
 --------------------------- Basic Medium Config --------------------------------
-XAXIS-Range:
-\txmin: {self.xmin:.3f}\txmax: {self.xmax:.3f}\tnx: {self.nx}
-ZAXIS-Range:
-\tzmin: {self.zmin:.3f}\tzmax: {self.zmax:.3f}\tnz: {self.nz}
+XAXIS-RANGE:
+\txmin: {self.xmin:.2f}m\txmax: {self.xmax:.2f}m\tnx: {self.nx}
+ZAXIS-RANGE:
+\tzmin: {self.zmin:.2f}m\tzmax: {self.zmax:.2f}m\tnz: {self.nz}
+MEDIUM_TYPE:
+\t{self.medium_type}
 --------------------------------------------------------------------------------
 """

@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-from tools import getFileExt, props
+from tools import get_file_ext, props
 
 class SFD:
     """
@@ -223,7 +223,7 @@ class SFD:
         print("\nDone!")
 
     def save_sfd(self, fname):
-        file_ext = getFileExt(fname)
+        file_ext = get_file_ext(fname)
         if file_ext != '.sfd':
             fname = fname + ".sfd"
         print(f"saving into file {fname}")

@@ -1,14 +1,17 @@
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractmethod
+
 import numpy as np
+
+import constants
+
 
 class Boundary(ABC):
     @classmethod
-    def getBoundary(cls, boundaryType):
-        if boundaryType == 'solid':
+    def get_boundary(cls, boundary_type):
+        if boundary_type == constants.SOLID_BOUNDARY:
             return SolidBoundary()
-        elif boundaryType == 'atten':
+        elif boundary_type == constants.ATTEN_BOUNDARY:
             return AttenBoundary()
-
 
     def __init__(self):
         self.n = None
@@ -20,6 +23,8 @@ class Boundary(ABC):
         self.absorbXLow  = None
         self.absorbZHigh = None
         self.absorbZLow  = None
+
+        self.boundary_type = None
     
     # 这里不能使用抽象方法，子类无法通过该函数修改父类变量
     def set_parameter(self, n, m, a, b):
@@ -33,16 +38,24 @@ class Boundary(ABC):
         self.absorbZHigh = np.arange(n-b, n)
         self.absorbZLow  = np.arange(0, b)
 
-
-    @abstractclassmethod
+    @abstractmethod
     def apply(self, u):
         pass
 
+    def __str__(self):
+        return f"""\
+-------------------------- Boundary Config -------------------------------
+Absorb Length X: {self.a} \t Absorb Length Z: {self.b}
+Absorb Boundary Type: {self.boundary_type}
+--------------------------------------------------------------------------
+"""
 
 
 class SolidBoundary(Boundary):
     def __init__(self):
         super().__init__()
+        self.v = None
+        self.boundary_type = constants.SOLID_BOUNDARY
 
     def set_parameter(self, n, m, a, b, v=0):
         super(SolidBoundary, self).set_parameter(n, m, a, b)
@@ -56,14 +69,18 @@ class SolidBoundary(Boundary):
         u[:, self.absorbZLow]  = self.v
 
 
-
 class AttenBoundary(Boundary):
     def __init__(self):
         super().__init__()
         self.alpha = None
+        self.GXLow = None
+        self.GXLow = None
+        self.GZHigh = None
+        self.GZLow = None
 
+        self.boundary_type = constants.ATTEN_BOUNDARY
 
-    def set_parameter(self, n, m, a, b, alpha):
+    def set_parameter(self, n, m, a, b, alpha=0.02):
         super().set_parameter(n, m, a, b)
         self.alpha = alpha
         self.GXHigh = np.exp(-(self.alpha * (self.a - self.absorbXLow[::-1]))**2)

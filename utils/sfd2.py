@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from tools import getFileExt, props
+import constants
+from tools import get_file_ext, props
 
 class SFD:
     """
@@ -79,7 +80,7 @@ class SFD:
 
     def read_from_file(self, file, ext=None):
         if ext is None:
-            ext = getFileExt(file)[1:]
+            ext = get_file_ext(file)[1:]
         if ext == 'txt':
             with open(file, "r") as fp:
                 self.nx, self.nz, self.nt = [int(i) for i in fp.readline().split()]
@@ -137,9 +138,17 @@ class SFD:
             plt.cla()
             plt.clf()
         print("Done!")
+
+    def save(self, fname, save_format=constants.FORMAT_TXT):
+        if save_format == constants.FORMAT_TXT:
+            self.save_txt(fname)
+        elif save_format == constants.FORMAT_SFD:
+            self.save_sfd(fname)
+        else:
+            TypeError("Save format: {} not support.".format(save_format))
     
     def save_sfd(self, fname):
-        file_ext = getFileExt(fname)
+        file_ext = get_file_ext(fname)
         if file_ext != '.sfd':
             fname = fname + ".sfd"
         print(f"saving into file {fname}")
