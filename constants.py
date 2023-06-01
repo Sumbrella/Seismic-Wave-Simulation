@@ -3,10 +3,11 @@
 __version__ = "1.0.0"
 
 # # arg commands
-COMMAND_RUN = "run"
+COMMAND_RUN      = "run"
+COMMAND_DRAW_SFD = "draw"
 
 # # medium type constants
-I_MEDIUM = "I"
+I_MEDIUM   = "I"
 VTI_MEDIUM = "VTI"
 HTI_MEDIUM = "HTI"
 
@@ -28,3 +29,8 @@ SAVE_FORMATS = [FORMAT_SFD, FORMAT_TXT]
 SOURCE_RICKER = "ricker"
 
 SOURCE_TYPES = [SOURCE_RICKER]
+
+# =============== Code constants =================
+ONE_FIG_SHAPE = (5, 3)
+TWO_FIG_SHAPE = (9, 4)
+FIG_DPI = 120

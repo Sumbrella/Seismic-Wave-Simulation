@@ -1,95 +1,52 @@
-import os
 import numpy as np
+import matplotlib.pyplot as plt
 
+import constants
 from tools import get_file_ext, props
+
 
 class SFD:
     """
-    Seismic forward simulation data format
-    -----------
+    Seismic forward simulation data format.
+    The txt format like this: 
+    -------------------------------------------------------
     nx, nz, nt
     xmin, xmax
     zmin, zmax
-    endt
-    i
-    data(1, 1) data(1, 2) ...
-    ...
-    i + 1
-    ...
-    ...
-    nt
-    data(1, 1) data(1, 2) ...
-    ...
-    ----------
+    t1
+    data(t1, x1, z1) data(t1, x2, z1) ... data(t1, xn, z1)
+    ......................................................
+    ......................................................
+    data(t1, x1, zn) data(t1, x2, zn) ... data(t1, xn, zn)
+    t2
+    data(t2, x1, z1) data(t2, x2, z1) ... data(t2, xn, z1)
+    ......................................................
+    ......................................................
+    data(t2, x1, zn) data(t2, x2, zn) ... data(t2, xn, zn)
+    t3
+    ......................................................
+    ......................................................
+    ......................................................
+    ......................................................
+    tn
+    data(tn, x1, z1) data(tn, x2, z1) ... data(tn, xn, z1)
+    ......................................................
+    ......................................................
+    data(tn, x1, zn) data(tn, x2, zn) ... data(tn, xn, zn)
+    ------------------------------------------------------
+    
     """
 
-    def __init__(self, file=None, *args, xmin=None, xmax=None, zmin=None, zmax=None, endt=None, U=None):
+    def __init__(self, file=None, ext=None, *args, xmin=None, xmax=None, zmin=None, zmax=None, ts=None, U=None):
         """initialize
 
         Args:
-            file (str, optional): .sfd file to read, if None you should provide other arguments. Defaults to None.
+            file (str, optional) .: .sfd file to be read, if None you should provide other arguments. Defaults to None.
             xmin (float, optional): the min value of x-axis. Defaults to None.
             xmax (float, optional): the max value of x-axis. Defaults to None.
-            zmin (float, optional): the min value of y-axis. Defaults to None.
-            zmax (float, optional): the max value of y-axis. Defaults to None.
-            endt (float, optional): end time. Defaults to None.
+            zmin (float, optional): the min value of z-axis. Defaults to None.
+            zmax (float, optional): the max value of z-axis. Defaults to None.
             U (numpy.array, optional): 3D array, with shape(nt, nz, nx). Defaults to None.
-
-        Example:
-        # from .sfd file
-        data = SFD(file="./data/python_demo/test.sfd")
-        # ----------------------------
-        # from data
-            import numpy as np
-            import matplotlib.pyplot as plt
-            import seaborn as sns
-            import time
-
-            ## parameters
-            xmin, xmax = -512, 512
-            zmin, zmax = -512, 512
-            tmin, tmax =  0, 2
-            dx, dz, dt = 4, 4, 0.0004
-            v0 = 2000
-            fm = 40
-            dframe = 50
-
-            ## construct arrays
-            X  = np.arange(xmin, xmax, dx)
-            Z  = np.arange(zmin, zmax, dz)
-            T  = np.arange(tmin, tmax, dt)
-
-            nx, nz, nt = X.size, Z.size, T.size
-
-            V  = np.ones((nz, nx)) * v0
-
-            from utils.psm_simulator import PSMSimulator
-            sim  = PSMSimulator(xmin, xmax, zmin, zmax, tmax, nt, nx, nz, V, fm, nx//2, nz//2)
-
-            frames = nt // dframe
-
-            U = np.zeros((frames, nz, nx))
-            print("start simulating...")
-
-            st = time.time()
-            for frame in range(frames):
-                for _ in range(dframe):
-                    sim.forward()
-                print(f"\rprocess: {sim.current_nt}/{nt}  runtime:{time.time() - st:.2f}s", end="")
-                U[frame] = sim.u1
-            print("\nDone!")
-
-            from utils.sfd import SFD
-            sfd = SFD(
-                xmin=xmin,
-                xmax=xmax,
-                zmin=zmin,
-                zmax=zmax,
-                endt=tmax,
-                U=U
-            )
-            sfd.save_txt("./data/python_demo/test.sfd")
-            sfd.save_gif()
         """
         self.xmin = None
         self.xmax = None
@@ -97,95 +54,107 @@ class SFD:
         self.zmin = None
         self.zmax = None
 
-        self.endt = None
-
         self.dx = None
-        self.dz = None 
-        self.dt = None
+        self.dz = None
         self.nx = None
         self.nz = None
         self.nt = None
 
+        self.ts = None
         self.data = None
 
         if file is not None:
-            self.read_from_file(file)
+            self.read_from_file(file, ext)
         else:
             self.xmin = xmin
             self.xmax = xmax
             self.zmin = zmin
             self.zmax = zmax
-            self.endt = endt
+            self.ts = ts
             self.data = U.copy()
             self.nt, self.nz, self.nx = self.data.shape
             self.dx = (self.xmax - self.xmin) / (self.nx - 1)
             self.dz = (self.zmax - self.zmin) / (self.nz - 1)
-            self.dt = (self.endt - 0) / (self.nt - 1) 
 
-        # self.x = np.linspace(self.xmin, self.xmax, self.nx)
-        # self.z = np.linspace(self.zmin, self.zmax, self.nz)
+        self.vmax = np.percentile(self.data, 99) * 7.5
+        self.vmin = -self.vmax
 
     def read_from_file(self, file, ext=None):
-        from tools import get_file_ext
-
-        if not ext:
-            file_ext = get_file_ext(file)
-        else:
-            file_ext = ext
-        
-        if file_ext == '.txt':
+        if ext is None:
+            ext = get_file_ext(file)[1:]
+        if ext == 'txt':
             with open(file, "r") as fp:
                 self.nx, self.nz, self.nt = [int(i) for i in fp.readline().split()]
                 self.xmin, self.xmax = [float(i) for i in fp.readline().split()]
                 self.zmin, self.zmax = [float(i) for i in fp.readline().split()]
-                self.endt = float(fp.readline())
 
                 self.dx = (self.xmax - self.xmin) / (self.nx - 1)
                 self.dz = (self.zmax - self.zmin) / (self.nz - 1)
-                self.dt = (self.endt - 0) / (self.nt - 1)
                 self.data = np.zeros((self.nt, self.nz, self.nx))
 
+                self.ts = np.ones(self.nt)
+
                 for _ in range(self.nt):
-                    idx = int(fp.readline())
+                    ti = float(fp.readline())
+                    self.ts[_] = ti
                     tmp = np.zeros((self.nz, self.nx))
                     for i in range(self.nz):
                         tmp[i] = [float(i) for i in fp.readline().split()]
                     self.data[_] = tmp.copy()
-        elif file_ext == 'sfd':
+
+        elif ext == 'sfd':
             dc = np.load(file, "r")
-            self.nx, self.nz, self.nt = dc['nx'], dc['nz'], dc['nt']
-            self.xmin, self.xmax = dc['xmin'], dc['xmax']
-            self.zmin, self.zmax = dc['zmin'], dc['zmax']
-            self.endt = dc['endt']
-
-            self.dx = (self.xmax - self.xmin) / (self.nx - 1)
-            self.dz = (self.zmax - self.zmin) / (self.nz - 1)
-            self.dt = (self.endt - 0) / (self.nt - 1)
-
-            self.data = dc['data']
+            for key, value in dc:
+                setattr(self, key, value)
         else:
-            TypeError("File Extension not support.")
-        
-    
-    def draw(self, *args, vmin=None, vmax=None, center=None):
-        import matplotlib.pyplot as plt
-        import seaborn as sns
+            TypeError("Save Extension Not Support.")
 
+    def plot_frame(self, index, *args, **kwargs):
+        kwargs.setdefault('vmin', self.vmin)
+        kwargs.setdefault('vmax', self.vmax)
+        kwargs.setdefault('aspect', 'auto')
+        kwargs.setdefault('cmap', 'seismic')
+        plt.axis('equal')
+        plt.imshow(
+            self.data[index],
+            extent=[self.xmin, self.xmax, self.zmin, self.zmax],
+            **kwargs,
+        )
+
+    def draw(self, seg=0.01, figsize=constants.ONE_FIG_SHAPE, dpi=constants.FIG_DPI, vmin=None, vmax=None):
         if vmax is None:
-            vmax = np.percentile(self.data, 95) * 1e3
+            vmax = self.vmax
         if vmin is None:
-            vmin = -vmax
+            vmin = self.vmin
 
         print("drawing sfd file...")
+        plt.figure(figsize=figsize, dpi=dpi)
         for _ in range(self.nt):
-            print(f"\r{_ * self.dt:.2f}s/{self.endt:.2f}s", end="")
-            sns.heatmap(self.data[_], vmin=vmin, vmax=vmax, center=center, cmap='seismic')
-            plt.title(f"t={_ * self.dt : .2f}s")
-            plt.pause(self.dt / 2)
+            self.plot_frame(_, vmin=vmin, vmax=vmax)
+            plt.xlabel("X")
+            plt.ylabel("Z")
+            plt.title(f"t={self.ts[_] : .2f}s")
+            plt.pause(seg)
             plt.cla()
             plt.clf()
-        print("\nDone!")
-    
+        print("Done!")
+
+    def save(self, fname, save_format=constants.FORMAT_TXT):
+        if save_format == constants.FORMAT_TXT:
+            self.save_txt(fname)
+        elif save_format == constants.FORMAT_SFD:
+            self.save_sfd(fname)
+        else:
+            TypeError("Save format: {} not support.".format(save_format))
+
+    def save_sfd(self, fname):
+        file_ext = get_file_ext(fname)
+        if file_ext != '.sfd':
+            fname = fname + ".sfd"
+        print(f"saving into file {fname}")
+        dc = props(self)
+        np.save(fname, dc)
+
     def save_gif(self, fname="wave.gif", vmin=None, vmax=None, factor=1.0):
         """save the .std as gif file.
 
@@ -222,15 +191,6 @@ class SFD:
                 plt.clf()
         print("\nDone!")
 
-    def save_sfd(self, fname):
-        file_ext = get_file_ext(fname)
-        if file_ext != '.sfd':
-            fname = fname + ".sfd"
-        print(f"saving into file {fname}")
-        dc = props()
-        np.save(fname, dc)
-
-
     def save_txt(self, fname):
         from time import time
         print(f"saving into file {fname}")
@@ -239,16 +199,15 @@ class SFD:
             fp.write(f"{self.nx} {self.nz} {self.nt}\n")
             fp.write(f"{self.xmin} {self.xmax}\n")
             fp.write(f"{self.zmin} {self.zmax}\n")
-            fp.write(f"{self.endt}\n")
 
             for i in range(self.nt):
                 print(f"\r{i + 1}/{self.nt} {time() - st:.3f}s", end="")
-                fp.write(f"{i}\n")
+                fp.write(f"{self.ts[i]}\n")
                 for j in range(self.nz):
                     fp.write(" ".join([str(v) for v in self.data[i, j, :]]) + "\n")
 
         print("\nDone!")
-    
+
     def save_png(self, savedir, vmin=None, vmax=None, center=0, factor=1.0):
         """save the .std as a series of png file.
 
@@ -276,8 +235,8 @@ class SFD:
             print(f"\rprocess:{_ * self.dt:.2f}s/{self.endt:.2f}s  runtime:{time() - start_time:.2f}s", end="")
             sns.heatmap(
                 data=self.data[_],
-                vmin=vmin, 
-                vmax=vmax, 
+                vmin=vmin,
+                vmax=vmax,
                 center=center,
                 cmap='seismic'
             )
