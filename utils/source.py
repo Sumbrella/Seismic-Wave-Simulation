@@ -9,7 +9,7 @@ def get_none(*args):
     return none
 
 
-def get_ricker(fm, dt=0.0, *args):
+def get_ricker(fm=40, dt=0.0, *args):
     def ricker(t):
         return (1 - 2 * (np.pi * fm * (t - dt)) ** 2) * np.exp(-(fm * np.pi * (t - dt)) ** 2)
 

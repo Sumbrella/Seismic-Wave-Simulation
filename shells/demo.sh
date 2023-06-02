@@ -10,14 +10,14 @@ python main.py run\
     --zmax 1024 \
     --nz 256 \
     --medium_type I \
-    --c_matrix 24300000 6075000\
+    --c11 24300000 \
+    --c12 6075000 \
     --source_x_args 40 \
     --source_z_args 40 \
     --simulate_time 0.2 \
     --simulate_delta_t 2e-4 \
     --save_times 10 \
-    --run_with_show \
-    --source_z_type ricker \
     --save \
     --x_outfile data/test_x.sfd \
-    --z_outfile data/test_z.sfd
+    --z_outfile data/test_z.sfd \
+    --run_with_show

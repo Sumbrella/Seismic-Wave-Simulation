@@ -17,9 +17,9 @@ python main.py run\
     --simulate_time 0.2 \
     --simulate_delta_t 2e-4 \
     --save_times 10 \
-    --run_with_show \
     --source_x_type none \
     --source_z_type ricker \
     --save \
     --x_outfile data/test_x.sfd \
-    --z_outfile data/test_z.sfd
+    --z_outfile data/test_z.sfd \
+    --run_with_show
