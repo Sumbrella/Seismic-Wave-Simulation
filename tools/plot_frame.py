@@ -16,8 +16,19 @@ def plot_frame(data, *args, **kwargs):
     kwargs.setdefault('cmap', 'seismic')
     kwargs.setdefault('aspect', 'auto')
     return plt.imshow(
-        data, 
-        # cmap=cmap,
-        # aspect=aspect,
+        data,
+        *args,
         **kwargs,
     )
+
+
+def plot_frame_xz(datax, dataz, fig, t, *args, **kwargs):
+    fig.suptitle(f"t={t:.2f}s")
+
+    plt.subplot(121)
+    plot_frame(datax, *args, **kwargs)
+    plt.title("X")
+
+    plt.subplot(122)
+    plot_frame(dataz, *args, **kwargs)
+    plt.title("Z")

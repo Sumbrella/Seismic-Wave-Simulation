@@ -7,7 +7,7 @@ import os
 import numpy as np
 
 import constants
-from examples.draw_sfd import draw_xz
+from examples.draw_sfd import show_xz, save_gif_xz
 from examples.wave_loop import wave_loop
 from tools import cover_cmat_arg_to_matrix
 
@@ -213,26 +213,71 @@ save_cfg.add_argument(
 
 # ========================================================================== #
 
-# =========================== Draw SFD Command ============================= #
-parser_draw_sfd = subparsers.add_parser(constants.COMMAND_DRAW_SFD, help="draw sfd format file")
-parser_draw_sfd.add_argument(
+# =========================== Show SFD Command ============================= #
+parser_draw = subparsers.add_parser(constants.COMMAND_SHOW, help="draw sfd format file")
+
+parser_draw.add_argument(
     "--input_file",
     type=str,
     nargs="+"
 )
-parser_draw_sfd.add_argument(
+
+parser_draw.add_argument(
     "--file_format",
     type=str,
     choices=constants.SAVE_FORMATS
 )
-parser_draw_sfd.add_argument(
+
+parser_draw.add_argument(
     "--seg",
     type=float
 )
-parser_draw_sfd.add_argument(
+
+parser_draw.add_argument(
     "--dpi",
     type=float,
     default=constants.FIG_DPI
+)
+# ========================================================================== #
+
+# =========================  Save SFD Command ============================== #
+parser_draw_gif = subparsers.add_parser("save_gif", help="save sfd file to gif")
+
+parser_draw_gif.add_argument(
+    "--input_file",
+    type=str,
+    nargs="+"
+)
+
+parser_draw_gif.add_argument(
+    "--file_format",
+    type=str,
+    choices=constants.SAVE_FORMATS,
+)
+
+parser_draw_gif.add_argument(
+    "--gif_name",
+    type=str
+)
+
+parser_draw_gif.add_argument(
+    "--vmax",
+    type=float
+)
+
+parser_draw_gif.add_argument(
+    "--vmin",
+    type=float
+)
+
+parser_draw_gif.add_argument(
+    "--fps",
+    type=int
+)
+
+parser_draw_gif.add_argument(
+    "--dpi",
+    type=float
 )
 
 argv = [
@@ -412,7 +457,8 @@ if __name__ == "__main__":
             sfd_x.save(args.x_outfile, save_format=args.save_format)
             sfd_z.save(args.z_outfile, save_format=args.save_format)
 
-    elif args.subcommand == constants.COMMAND_DRAW_SFD:
+    # Command show
+    elif args.subcommand == constants.COMMAND_SHOW:
         files = args.input_file
         datas = [SFD(f, args.file_format) for f in files]
         if len(datas) == 1:
@@ -421,6 +467,23 @@ if __name__ == "__main__":
                 dpi=args.dpi,
             )
         elif len(datas) == 2:
-            draw_xz(*datas, args.seg, dpi=args.dpi)  # TODO: 可以通过参数更改图片大小
+            show_xz(*datas, args.seg, dpi=args.dpi, vmax=args.vmax, vmin=args.vmin)  # TODO: 可以通过参数更改图片大小
         else:
-            parser_draw_sfd.error("Input file should has one or two file.")
+            parser_draw.error("Input file should has one or two.")
+
+    # Command draw gif
+    elif args.subcommand == constants.COMMAND_DRAW_GIF:
+        files = args.input_file
+        datas = [SFD(f, args.file_format) for f in files]
+
+        if len(datas) == 1:
+            datas[0].save_gif(
+                args.gif_name,
+                fps=args.fps,
+                dpi=args.dpi
+            )
+        elif len(datas) == 2:
+            save_gif_xz(*datas, args.gif_name, args.fps, constants.TWO_FIG_SHAPE,
+                        dpi=args.dpi, vmax=args.vmax, vmin=args.vmin)
+        else:
+            parser_draw_gif.error("Input file should has one or two.")

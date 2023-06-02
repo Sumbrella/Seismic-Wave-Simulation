@@ -139,6 +139,8 @@ class SFD:
         Returns:
             A matplotlib
         """
+        kwargs.setdefault("vmin", self.vmin)
+        kwargs.setdefault("vmax", self.vmax)
         return plot_frame(
             self.data[index],
             *args,
@@ -169,7 +171,7 @@ class SFD:
         if vmin is None:
             vmin = self.vmin
         if seg is None:
-            seg = 0.01
+            seg = constants.SHOW_SEG
 
         print("drawing sfd file...")
         plt.figure(figsize=figsize, dpi=dpi)
@@ -219,26 +221,35 @@ class SFD:
         dc = props(self)
         np.save(fname, dc)
 
-    def save_gif(self, fname="wave.gif", fps=30):
+    def save_gif(self, fname=None, dpi=None, fps=None):
         """
-        The save_gif function saves the .std file as a gif.
+        The save_gif function saves the animation as a gif file.
 
         Args:
-            fname: Save the file name of the gif
-            fps: Set the frames per second of the gif
+            self: Represent the instance of the class
+            fname: Specify the name of the file to save
+            dpi: Set the resolution of the gif
+            fps: Set the frame rate of the gif
 
         Returns:
             None
         """
-        metadata = dict(title="movie")
+        if fname is None:
+            fname = "wave.gif"
+        if dpi is None:
+            dpi = constants.FIG_DPI
+        if fps is None:
+            fps = constants.GIF_FPS
+
+        metadata = dict(title="wave field")
         writer = anime.PillowWriter(fps, metadata=metadata)
-        fig = plt.figure(dpi=120)
+        fig = plt.figure(dpi=dpi)
         start_time = time.time()
 
         print(f"saving into {fname}...")
-        with writer.saving(fig, fname, 100):
+        with writer.saving(fig, fname, dpi):
             for _ in range(self.nt):
-                print(f"\rprocess:{_}/{self.nt}  runtime:{time.time() - start_time:.2f}s", end="")
+                print(f"\rprocess:{_ + 1}/{self.nt}  runtime:{time.time() - start_time:.2f}s", end="")
                 self.plot_frame(_),
                 plt.title("t={:.2f}s".format(self.ts[_]))
                 writer.grab_frame()

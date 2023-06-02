@@ -3,8 +3,9 @@
 __version__ = "1.0.0"
 
 # # arg commands
-COMMAND_RUN      = "run"
-COMMAND_DRAW_SFD = "draw"
+COMMAND_RUN  = "run"
+COMMAND_SHOW = "show"
+COMMAND_DRAW_GIF = "save_gif"
 
 # # medium type constants
 I_MEDIUM   = "I"
@@ -31,6 +32,8 @@ SOURCE_RICKER = "ricker"
 SOURCE_TYPES = [SOURCE_RICKER]
 
 # =============== Code constants =================
-ONE_FIG_SHAPE = (5, 3)
+ONE_FIG_SHAPE = (4, 3)
 TWO_FIG_SHAPE = (9, 4)
 FIG_DPI = 120
+GIF_FPS = 10
+SHOW_SEG = 0.1
