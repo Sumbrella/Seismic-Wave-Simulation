@@ -89,7 +89,7 @@ def wave_loop(
             zmin=s.medium.cfg.zmin,
             zmax=s.medium.cfg.zmax,
             ts=save_times,
-            U=ux
+            u=ux
         )
 
         sfd_z = SFD(
@@ -98,7 +98,7 @@ def wave_loop(
             zmin=s.medium.cfg.zmin,
             zmax=s.medium.cfg.zmax,
             ts=save_times,
-            U=uz
+            u=uz
         )
 
 

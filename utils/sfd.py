@@ -1,8 +1,12 @@
+import os
+import time
+
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as anime
 
 import constants
-from tools import get_file_ext, props
+from tools import get_file_ext, props, plot_frame
 
 
 class SFD:
@@ -37,16 +41,17 @@ class SFD:
     
     """
 
-    def __init__(self, file=None, ext=None, *args, xmin=None, xmax=None, zmin=None, zmax=None, ts=None, U=None):
+    def __init__(self, file=None, ext=None, *, xmin=None, xmax=None, zmin=None, zmax=None, ts=None, u=None):
         """initialize
 
         Args:
             file (str, optional) .: .sfd file to be read, if None you should provide other arguments. Defaults to None.
+            If the file is None, you should provide follow arguments.
             xmin (float, optional): the min value of x-axis. Defaults to None.
             xmax (float, optional): the max value of x-axis. Defaults to None.
             zmin (float, optional): the min value of z-axis. Defaults to None.
             zmax (float, optional): the max value of z-axis. Defaults to None.
-            U (numpy.array, optional): 3D array, with shape(nt, nz, nx). Defaults to None.
+            u (numpy.array, optional): 3D array, with shape(nt, nz, nx). Defaults to None.
         """
         self.xmin = None
         self.xmax = None
@@ -71,18 +76,29 @@ class SFD:
             self.zmin = zmin
             self.zmax = zmax
             self.ts = ts
-            self.data = U.copy()
+            self.data = u.copy()
             self.nt, self.nz, self.nx = self.data.shape
-            self.dx = (self.xmax - self.xmin) / (self.nx - 1)
-            self.dz = (self.zmax - self.zmin) / (self.nz - 1)
+            self.dx = (self.xmax - self.xmin) / self.nx
+            self.dz = (self.zmax - self.zmin) / self.nz
 
         self.vmax = np.percentile(self.data, 99) * 7.5
         self.vmin = -self.vmax
 
     def read_from_file(self, file, ext=None):
+        """
+        The read_from_file function reads in a file and stores the data into an object.
+
+        Args:
+            self: Represent the instance of the class
+            file: Specify the file to read from
+            ext: Specify the file extension
+
+        Returns:
+            A dictionary of the attributes
+        """
         if ext is None:
-            ext = get_file_ext(file)[1:]
-        if ext == 'txt':
+            ext = get_file_ext(file)
+        if ext == constants.FORMAT_TXT:
             with open(file, "r") as fp:
                 self.nx, self.nz, self.nt = [int(i) for i in fp.readline().split()]
                 self.xmin, self.xmax = [float(i) for i in fp.readline().split()]
@@ -102,7 +118,7 @@ class SFD:
                         tmp[i] = [float(i) for i in fp.readline().split()]
                     self.data[_] = tmp.copy()
 
-        elif ext == 'sfd':
+        elif ext == constants.FORMAT_SFD:
             dc = np.load(file, "r")
             for key, value in dc:
                 setattr(self, key, value)
@@ -110,22 +126,50 @@ class SFD:
             TypeError("Save Extension Not Support.")
 
     def plot_frame(self, index, *args, **kwargs):
-        kwargs.setdefault('vmin', self.vmin)
-        kwargs.setdefault('vmax', self.vmax)
-        kwargs.setdefault('aspect', 'auto')
-        kwargs.setdefault('cmap', 'seismic')
-        plt.axis('equal')
-        plt.imshow(
+        """
+        The plot_frame function takes a 2D array of data and plots it as an image.
+        The extent keyword argument is used to specify the x and y limits of the plot.
+
+
+        Args:
+            index: Select the frame to be plotted
+            *args: Pass a variable number of arguments to the function
+            **kwargs: Pass keyword arguments to the plot_frame function
+
+        Returns:
+            A matplotlib
+        """
+        return plot_frame(
             self.data[index],
+            *args,
             extent=[self.xmin, self.xmax, self.zmin, self.zmax],
-            **kwargs,
+            **kwargs
         )
 
-    def draw(self, seg=0.01, figsize=constants.ONE_FIG_SHAPE, dpi=constants.FIG_DPI, vmin=None, vmax=None):
+    def draw(self, figsize=constants.ONE_FIG_SHAPE, dpi=constants.FIG_DPI, seg=None, vmin=None, vmax=None):
+        """
+        The draw function is a simple animation of the SFD file.
+        It plots each frame in the SFD file, one after another, with a pause between frames.
+        The user can specify how long to pause between frames (seg), as well as the size and resolution of the figure
+        (figsize and dpi).
+
+        Args:
+            self: Represent the object itself
+            figsize: Set the size of the figure
+            dpi: Set the resolution of the image
+            seg: Set the time interval between frames
+            vmin: Set the minimum value of the colorbar
+            vmax: Set the maximum value of the colorbar
+
+        Returns:
+            None
+        """
         if vmax is None:
             vmax = self.vmax
         if vmin is None:
             vmin = self.vmin
+        if seg is None:
+            seg = 0.01
 
         print("drawing sfd file...")
         plt.figure(figsize=figsize, dpi=dpi)
@@ -140,6 +184,16 @@ class SFD:
         print("Done!")
 
     def save(self, fname, save_format=constants.FORMAT_TXT):
+        """
+        The save function saves the sfd data to a file.
+
+        Args:
+            fname: Specify the name of the file to be saved
+            save_format: Determine which format of the sfd file
+
+        Returns:
+            None
+        """
         if save_format == constants.FORMAT_TXT:
             self.save_txt(fname)
         elif save_format == constants.FORMAT_SFD:
@@ -148,100 +202,90 @@ class SFD:
             TypeError("Save format: {} not support.".format(save_format))
 
     def save_sfd(self, fname):
+        """
+        The save_sfd function saves the data in a .sfd file.
+
+        Args:
+            self: Represent the instance of the class
+            fname: Specify the file name and location to save the data
+
+        Returns:
+            None
+        """
         file_ext = get_file_ext(fname)
-        if file_ext != '.sfd':
-            fname = fname + ".sfd"
+        if file_ext != constants.FORMAT_SFD:
+            fname = fname + constants.FORMAT_SFD
         print(f"saving into file {fname}")
         dc = props(self)
         np.save(fname, dc)
 
-    def save_gif(self, fname="wave.gif", vmin=None, vmax=None, factor=1.0):
-        """save the .std as gif file.
+    def save_gif(self, fname="wave.gif", fps=30):
+        """
+        The save_gif function saves the .std file as a gif.
 
         Args:
-            fname (str, optional): Filename. Defaults to "wave.gif".
-            vmin (_type_, optional): The minimum value of heatmap colormap. Defaults to None.
-            vmax (_type_, optional): The maximum value of heatmap colormap. Defaults to None.
-            factor (float, optional): Rate of multiply speed. Defaults to 1.0.
+            fname: Save the file name of the gif
+            fps: Set the frames per second of the gif
+
+        Returns:
+            None
         """
-        import matplotlib.animation as anime
-        import seaborn as sns
-        import matplotlib.pyplot as plt
-        from time import time
-
-        fps = 1 / self.dt * factor
-        if vmin is None:
-            vmin = np.percentile(self.data, 99)
-        if vmax is None:
-            vmax = np.percentile(self.data, 1)
-
-        metadata = dict(title="movie", artist="sumbrella")
+        metadata = dict(title="movie")
         writer = anime.PillowWriter(fps, metadata=metadata)
         fig = plt.figure(dpi=120)
-        start_time = time()
+        start_time = time.time()
 
         print(f"saving into {fname}...")
         with writer.saving(fig, fname, 100):
             for _ in range(self.nt):
-                print(f"\rprocess:{_ * self.dt:.2f}s/{self.endt:.2f}s  runtime:{time() - start_time:.2f}s", end="")
-                sns.heatmap(self.data[_], vmin=vmin, vmax=vmax, center=0, cmap='seismic')
-                plt.title(f"t={_ * self.dt : .2f}s")
+                print(f"\rprocess:{_}/{self.nt}  runtime:{time.time() - start_time:.2f}s", end="")
+                self.plot_frame(_),
+                plt.title("t={:.2f}s".format(self.ts[_]))
                 writer.grab_frame()
                 plt.cla()
                 plt.clf()
         print("\nDone!")
 
     def save_txt(self, fname):
-        from time import time
+        """
+        The save_txt function saves the data in a text file.
+
+        Args:
+            fname: Specify the file name to save the data into.
+
+        Returns:
+            None
+        """
         print(f"saving into file {fname}")
-        st = time()
+        st = time.time()
         with open(fname, "w+") as fp:
             fp.write(f"{self.nx} {self.nz} {self.nt}\n")
             fp.write(f"{self.xmin} {self.xmax}\n")
             fp.write(f"{self.zmin} {self.zmax}\n")
 
             for i in range(self.nt):
-                print(f"\r{i + 1}/{self.nt} {time() - st:.3f}s", end="")
+                print(f"\r{i + 1}/{self.nt} {time.time() - st:.3f}s", end="")
                 fp.write(f"{self.ts[i]}\n")
                 for j in range(self.nz):
                     fp.write(" ".join([str(v) for v in self.data[i, j, :]]) + "\n")
 
         print("\nDone!")
 
-    def save_png(self, savedir, vmin=None, vmax=None, center=0, factor=1.0):
-        """save the .std as a series of png file.
+    def save_png(self, save_dir):
+        """
+        The save_png function saves the frames of a movie as png files.
 
         Args:
-            savedir (str): dir to save the png
-            vmin (_type_, optional): The minimum value of heatmap colormap. Defaults to None.
-            vmax (_type_, optional): The maximum value of heatmap colormap. Defaults to None.
+            self: Represent the instance of the class
+            save_dir: Specify the directory where the images are saved
         """
-        import matplotlib.animation as anime
-        import seaborn as sns
-        import matplotlib.pyplot as plt
-        from time import time
-        import pandas as pd
-        import os
-
-        if vmin is None:
-            vmin = np.min(self.data) * 0.8
-        if vmax is None:
-            vmax = np.max(self.data) * 0.8
-
-        print(f"saving pngs into dir {savedir}")
-
-        start_time = time()
+        print(f"saving pngs into dir {save_dir}")
+        start_time = time.time()
         for _ in range(self.nt):
-            print(f"\rprocess:{_ * self.dt:.2f}s/{self.endt:.2f}s  runtime:{time() - start_time:.2f}s", end="")
-            sns.heatmap(
-                data=self.data[_],
-                vmin=vmin,
-                vmax=vmax,
-                center=center,
-                cmap='seismic'
-            )
-            plt.title(f"t={_ * self.dt : .2f}s")
-            plt.savefig(os.path.join(savedir, f"{_}"))
+            print(f"\rprocess:{_}/{self.nt}  runtime:{time.time() - start_time:.2f}s", end="")
+            self.plot_frame(_),
+            plt.title("t={:.2f}s".format(self.ts[_]))
+            plt.savefig(os.path.join(save_dir, "_"))
             plt.cla()
             plt.clf()
         print("\nDone!")

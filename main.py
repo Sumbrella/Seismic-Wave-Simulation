@@ -221,9 +221,13 @@ parser_draw_sfd.add_argument(
     nargs="+"
 )
 parser_draw_sfd.add_argument(
-    "--sfd_format",
+    "--file_format",
     type=str,
     choices=constants.SAVE_FORMATS
+)
+parser_draw_sfd.add_argument(
+    "--seg",
+    type=float
 )
 parser_draw_sfd.add_argument(
     "--dpi",
@@ -400,23 +404,23 @@ if __name__ == "__main__":
         if args.save:
             print("create dir: ", os.path.dirname(args.x_outfile))
             print("create dir: ", os.path.dirname(args.z_outfile))
-            os.makedirs(os.path.dirname(args.x_outfile))
-            os.makedirs(os.path.dirname(args.z_outfile))
+            if not os.path.exists(os.path.dirname(args.x_outfile)):
+                os.makedirs(os.path.dirname(args.x_outfile))
+            if not os.path.exists(os.path.dirname(args.z_outfile)):
+                os.makedirs(os.path.dirname(args.z_outfile))
 
-            sfd_x.save(args.x_oufile, save_format=args.save_format)
+            sfd_x.save(args.x_outfile, save_format=args.save_format)
             sfd_z.save(args.z_outfile, save_format=args.save_format)
 
-        print("Done!")
-
-    elif args.sucommand == constants.COMMAND_DRAW_SFD:
+    elif args.subcommand == constants.COMMAND_DRAW_SFD:
         files = args.input_file
-        datas = [SFD(f, args.sfd_format) for f in files]
+        datas = [SFD(f, args.file_format) for f in files]
         if len(datas) == 1:
             datas[0].draw(
                 seg=args.seg,
                 dpi=args.dpi,
             )
         elif len(datas) == 2:
-            draw_xz(*datas, args.seg, dpi=args.dpi) # TODO: 可以通过参数更改图片大小
+            draw_xz(*datas, args.seg, dpi=args.dpi)  # TODO: 可以通过参数更改图片大小
         else:
             parser_draw_sfd.error("Input file should has one or two file.")

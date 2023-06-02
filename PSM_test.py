@@ -248,7 +248,7 @@ if __name__ == '__main__':
         ymin=zmin,
         ymax=zmax,
         endt=tmax,
-        U=UX
+        u=UX
     ) 
 
     sfdz = SFD(
@@ -257,7 +257,7 @@ if __name__ == '__main__':
         ymin=zmin,
         ymax=zmax,
         endt=tmax,
-        U=UZ
+        u=UZ
     ) 
 
     sfdx.save_txt("./data/python_demo/testx.sfd")

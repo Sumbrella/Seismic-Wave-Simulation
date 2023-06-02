@@ -1,4 +1,3 @@
-import os
 import numpy as np
 from .medium import Medium
 from .source import Source
@@ -18,24 +17,23 @@ class SeismicSimulator:
             boundary: Boundary,
             dt: float = 0.1,
             endt: float = 1,
-            equationType: str = 'Wave',  # wave or velocity
-            timeDomainMethod: str = 'FD2',  # TODO: ADD METHODS
-            spaceDomainMethod: str = 'PSM',  # TODO: ADD METHODS
+            time_domain_method: str = 'FD2',  # TODO: ADD METHODS
+            space_domain_method: str = 'PSM',  # TODO: ADD METHODS
     ):
 
         self.medium = medium
         self.boundary = boundary
         self.source = source
 
-        self.timeDomainMethod = timeDomainMethod
-        self.spaceDoaminMethod = spaceDomainMethod
+        self.time_domain_method = time_domain_method
+        self.space_domain_method = space_domain_method
 
         self.dt = dt
         self.endt = endt
         self.ux = np.zeros(shape=medium.cfg.shape)
         self.uz = np.zeros(shape=medium.cfg.shape)
 
-        if timeDomainMethod == 'FD2':
+        if time_domain_method == 'FD2':
             self.lux = self.ux.copy()
             self.luz = self.uz.copy()
 
@@ -55,7 +53,7 @@ class SeismicSimulator:
 
         assert (vpmax * self.dt / np.min([dx, dz])) < (np.sqrt(2) / np.pi), \
             "Stability Can't pass, the value of (vmax * dt / dx) is {:.3f}, which should less than {:.3f}" \
-                .format(vpmax * self.dt / np.min([dx, dz]), np.sqrt(2) / np.pi)
+            .format(vpmax * self.dt / np.min([dx, dz]), np.sqrt(2) / np.pi)
 
     def forward(self):
         if self.check_end():
@@ -75,10 +73,10 @@ class SeismicSimulator:
         self._update_t()
 
     def time_step(self):
-        if self.timeDomainMethod == 'FD2':
+        if self.time_domain_method == 'FD2':
             cux, cuz = [self.ux, self.uz]
             self.ux, self.uz = 2 * np.asarray([self.ux, self.uz]) - np.asarray([self.lux, self.luz]) + \
-                               self.dt ** 2 / self.medium.rho * self.medium.calculate_step_value(self.ux, self.uz)
+                self.dt ** 2 / self.medium.rho * self.medium.calculate_step_value(self.ux, self.uz)
             self.lux, self.luz = [cux, cuz]
 
     def check_end(self):
