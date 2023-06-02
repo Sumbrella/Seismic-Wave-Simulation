@@ -1,4 +1,6 @@
-# simple demo for simulate 2D wave field on homogeneous isotropic meidum.
+# simple demo for simulate 2D wave field on homogeneous isotropic medium.
+
+cd $(dirname $(dirname $(realpath "$0"))) || exit
 
 python main.py run\
     --xmin 0 \
@@ -15,5 +17,7 @@ python main.py run\
     --simulate_delta_t 2e-4 \
     --save_times 10 \
     --run_with_show \
+    --source_z_type ricker \
     --save \
-    --source_z_type \
+    --x_outfile data/test_x.sfd \
+    --z_outfile data/test_z.sfd

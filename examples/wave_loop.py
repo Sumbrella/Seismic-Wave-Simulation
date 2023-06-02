@@ -1,12 +1,12 @@
 import time
-from typing import Union, List, Set, Tuple
+from typing import Union, List
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 import constants
 from utils.seismic_simulator import SeismicSimulator
-from tools.plot_frame import plot_frame
+from tools.plot_frame import plot_frame_xz
 from utils.sfd import SFD
 
 
@@ -15,10 +15,11 @@ def wave_loop(
         save_times: Union[List[float], int],
         is_show: bool = True,
         is_save: bool = True,
+        seg: float = None,
         vmin: float = None,
         vmax: float = None,
         **kwargs,
-) -> Union[tuple[SFD, SFD], tuple[None, None]]:
+):
     nt = int(s.endt / s.dt)
 
     # auto calculate save times, defaults to 20-step show one figure.
@@ -27,6 +28,9 @@ def wave_loop(
         if n_frame == 0:
             n_frame = 1
         save_times = n_frame
+
+    if seg is None:
+        seg = constants.SHOW_SEG
 
     # change save times to type of list
     if type(save_times) == int:
@@ -49,8 +53,9 @@ def wave_loop(
         uz = None
 
     if is_show:
-        plt.figure(figsize=constants.TWO_FIG_SHAPE, dpi=constants.FIG_DPI)
-
+        fig = plt.figure(figsize=constants.TWO_FIG_SHAPE, dpi=constants.FIG_DPI)
+    else:
+        fig = None
     j = 0
     for i in range(nt):
         s.forward()
@@ -64,19 +69,16 @@ def wave_loop(
             j += 1
 
             if is_show:
-                plt.subplot(121)
-                if vmin is None or vmax is None:
-                    plot_frame(s.ux, vmin=-np.percentile(s.ux, 99) * 7.5, vmax=np.percentile(s.ux, 99) * 7.5, **kwargs)
-                else:
-                    plot_frame(s.ux, vmin=vmin, vmax=vmax, **kwargs)
-
-                plt.subplot(122)
-                if vmin is None or vmax is None:
-                    plot_frame(s.uz, vmin=-np.percentile(s.uz, 99) * 7.5, vmax=np.percentile(s.uz, 99) * 7.5, **kwargs)
-                else:
-                    plot_frame(s.uz, vmin=vmin, vmax=vmax, **kwargs)
-
-                plt.pause(1e-3)
+                plot_frame_xz(
+                    s.ux,
+                    s.uz,
+                    fig,
+                    save_times[j],
+                    vmin=vmin if vmin else -np.percentile(s.ux, 99) * 7.5,
+                    vmax=vmax if vmax else np.percentile(s.ux, 99) * 7.5,
+                    **kwargs
+                )
+                plt.pause(seg)
                 plt.cla()
                 plt.clf()
 
@@ -100,7 +102,6 @@ def wave_loop(
             ts=save_times,
             u=uz
         )
-
 
         return sfd_x, sfd_z
     else:

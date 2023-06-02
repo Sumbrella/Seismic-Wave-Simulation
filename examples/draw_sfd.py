@@ -1,5 +1,5 @@
 import time
-
+import os
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as anime
@@ -28,8 +28,9 @@ def show_xz(sfd_x: SFD, sfd_z: SFD,
         vmax = sfd_x.vmax
 
     fig = plt.figure(figsize=figsize, dpi=dpi)
-
+    start_time = time.time()
     for i, t in enumerate(sfd_x.ts):
+        print(f"\rprocess:{i + 1}/{sfd_x.nt}  runtime:{time.time() - start_time:.2f}s", end="")
         plot_frame_xz(sfd_x.data[i], sfd_z.data[i], fig, t, vmin=vmin, vmax=vmax)
         plt.pause(seg)
         plt.cla()
@@ -63,3 +64,30 @@ def save_gif_xz(sfd_x: SFD, sfd_z: SFD, fname=None, fps=None, figsize=None, dpi=
             plt.cla()
             plt.clf()
     print("\nDone!")
+
+
+def save_png_xz(sfd_x: SFD, sfd_z: SFD, save_dir=None, figsize=None, dpi=None, vmin=None, vmax=None):
+    if figsize is None:
+        figsize = constants.ONE_FIG_SHAPE
+    if dpi is None:
+        dpi = constants.FIG_DPI
+    if vmin is None:
+        vmin = sfd_x.vmin
+    if vmax is None:
+        vmax = sfd_x.vmax
+
+    print(f"saving pngs into dir {save_dir}")
+
+    if not os.path.exists(save_dir):
+        print(f"Path {save_dir} not exists, creating...")
+        os.makedirs(save_dir)
+        print(f"Create {save_dir} success.")
+
+    start_time = time.time()
+    fig = plt.figure(figsize=figsize, dpi=dpi)
+    for i, t in enumerate(sfd_x.ts):
+        print(f"\rprocess:{i + 1}/{sfd_x.nt}  runtime:{time.time() - start_time:.2f}s", end="")
+        plot_frame_xz(sfd_x.data[i], sfd_z.data[i], fig, t, vmin=vmin, vmax=vmax)
+        plt.savefig(os.path.join(save_dir, f"{i}"))
+        plt.cla()
+        plt.clf()

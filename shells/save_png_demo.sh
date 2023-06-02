@@ -1,7 +1,7 @@
-
 cd $(dirname $(dirname $(realpath "$0"))) || exit
 
-python main.py show \
+python main.py save_png \
   --input_file data/test_x.sfd data/test_z.sfd\
   --file_format '.txt' \
-  --seg 0.2
+  --save_dir figures/
+

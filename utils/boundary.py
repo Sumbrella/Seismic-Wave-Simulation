@@ -8,9 +8,9 @@ import constants
 class Boundary(ABC):
     @classmethod
     def get_boundary(cls, boundary_type):
-        if boundary_type == constants.SOLID_BOUNDARY:
+        if boundary_type == constants.BOUNDARY_SOLID:
             return SolidBoundary()
-        elif boundary_type == constants.ATTEN_BOUNDARY:
+        elif boundary_type == constants.BOUNDARY_ATTEN:
             return AttenBoundary()
 
     def __init__(self):
@@ -55,7 +55,7 @@ class SolidBoundary(Boundary):
     def __init__(self):
         super().__init__()
         self.v = None
-        self.boundary_type = constants.SOLID_BOUNDARY
+        self.boundary_type = constants.BOUNDARY_SOLID
 
     def set_parameter(self, n, m, a, b, v=0):
         super(SolidBoundary, self).set_parameter(n, m, a, b)
@@ -78,7 +78,7 @@ class AttenBoundary(Boundary):
         self.GZHigh = None
         self.GZLow = None
 
-        self.boundary_type = constants.ATTEN_BOUNDARY
+        self.boundary_type = constants.BOUNDARY_ATTEN
 
     def set_parameter(self, n, m, a, b, alpha=0.02):
         super().set_parameter(n, m, a, b)

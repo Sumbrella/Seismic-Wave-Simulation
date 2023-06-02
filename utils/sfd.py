@@ -282,21 +282,39 @@ class SFD:
 
         print("\nDone!")
 
-    def save_png(self, save_dir):
+    def save_png(self, save_dir, figsize=None, dpi=None):
         """
-        The save_png function saves the frames of a movie as png files.
+        The save_png function saves the frames of a simulation as png files.
 
         Args:
-            self: Represent the instance of the class
-            save_dir: Specify the directory where the images are saved
+            self: Represent the instance of a class
+            save_dir: Specify the directory where the png files will be saved
+            figsize: Set the size of the figure
+            dpi: Set the resolution of the image
+
+        Returns:
+            Nothing
         """
+        if figsize is None:
+            figsize = constants.ONE_FIG_SHAPE
+        if dpi is None:
+            dpi = constants.FIG_DPI
+
         print(f"saving pngs into dir {save_dir}")
+
+        if not os.path.exists(save_dir):
+            print(f"Path {save_dir} not exists, creating...")
+            os.makedirs(save_dir)
+            print(f"Create {save_dir} success.")
+
         start_time = time.time()
+        plt.figure(figsize=figsize, dpi=dpi)
         for _ in range(self.nt):
-            print(f"\rprocess:{_}/{self.nt}  runtime:{time.time() - start_time:.2f}s", end="")
+            print(f"\rprocess:{_ + 1}/{self.nt}  runtime:{time.time() - start_time:.2f}s", end="")
             self.plot_frame(_),
             plt.title("t={:.2f}s".format(self.ts[_]))
-            plt.savefig(os.path.join(save_dir, "_"))
+            plt.savefig(os.path.join(save_dir, f"{_}"))
             plt.cla()
             plt.clf()
+
         print("\nDone!")
