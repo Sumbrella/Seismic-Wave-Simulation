@@ -1,321 +1,24 @@
 #! /usr/local/python
 
-import argparse
 import json
 import os
 
 import numpy as np
 
 import constants
-from examples.draw_sfd import show_xz, save_gif_xz
+from examples.draw_sfd import show_xz, save_gif_xz, save_png_xz
 from examples.wave_loop import wave_loop
 from tools import cover_cmat_arg_to_matrix
-
+from utils.seismic_argument_parser import SeismicArgumentParser
 from utils.medium import MediumConfig, Medium
 from utils.boundary import Boundary
 from utils.seismic_simulator import SeismicSimulator
 from utils.sfd import SFD
 from utils.source import Source, get_source_func
 
-
-parser = argparse.ArgumentParser(
-    prog='seismi',
-    description='',  # TODO Add description
-)
-subparsers = parser.add_subparsers(required=True, dest="subcommand")
-
-# version
-parser.add_argument('-v', '--version', action='version', version='%(prog)s' + constants.__version__,
-                    help='显示版本信息')
-
-# ============================= Command Run ================================= #
-parser_run = subparsers.add_parser(constants.COMMAND_RUN, help='run simulation')
-# # Medium Config
-medium_cfg = parser_run.add_argument_group(title="Medium Config")
-
-# # # Min Value of x-axis
-medium_cfg.add_argument(
-    '--xmin',
-    type=float,
-)
-
-# # # Max Value of x-axis
-medium_cfg.add_argument(
-    '--xmax',
-    type=float
-)
-
-# # # Dx
-medium_cfg.add_argument(
-    '--dx',
-    type=float
-)
-
-# # # Nx
-medium_cfg.add_argument(
-    '--nx',
-    type=int
-)
-
-# # # Min Value of z axis
-medium_cfg.add_argument(
-    '--zmin',
-    type=float,
-)
-
-# # # Max Value of z axis
-medium_cfg.add_argument(
-    '--zmax',
-    type=float,
-)
-
-# # # Dz
-medium_cfg.add_argument(
-    '--dz',
-    type=float
-)
-
-# # # Nz
-medium_cfg.add_argument(
-    '--nz',
-    type=int
-)
-
-# # # Medium Type
-medium_cfg.add_argument(
-    '--medium_type',
-    type=str,
-    choices=constants.MEDIUM_TYPES,
-    required=True
-)
-
-# # # rho
-medium_cfg.add_argument(
-    '--rho',
-    default=2.7,
-)
-
-# # # C Argument
-medium_cfg.add_argument(
-    '--c_matrix',
-    nargs='*'
-)
-
-# # source configs
-source_cfg = parser_run.add_argument_group(title="Source Configs")
-source_cfg.add_argument(
-    "--source_x", dest="sx",
-    type=float
-)
-source_cfg.add_argument(
-    "--source_z", dest="sz",
-    type=float
-)
-source_cfg.add_argument(
-    "--source_x_type",
-    type=str,
-    default=constants.SOURCE_RICKER,
-    choices=constants.SOURCE_TYPES
-)
-source_cfg.add_argument(
-    "--source_x_args",
-    nargs="*",
-    default=[],
-    type=float
-)
-source_cfg.add_argument(
-    "--source_z_type",
-    type=str,
-    default=constants.SOURCE_RICKER,
-    choices=constants.SOURCE_TYPES
-)
-source_cfg.add_argument(
-    "--source_z_args",
-    nargs="*",
-    default=[],
-    type=float
-)
-
-# # Boundary Configs
-boundary_cfg = parser_run.add_argument_group(title="Boundary Configs")
-
-# # # Boundary Type
-boundary_cfg.add_argument(
-    "--boundary_type", dest='boundary_type',
-    type=str,
-    default=constants.SOLID_BOUNDARY,
-    choices=constants.BOUNDARY_TYPES
-)
-# # # X absorb length
-boundary_cfg.add_argument(
-    "--x_absort_length", dest='a',
-    type=int,
-    default=0
-)
-# # # Z absorb length
-boundary_cfg.add_argument(
-    "--z_absort_length", dest='b',
-    type=int,
-    default=0
-)
-# # # Other arguments of absorb func
-boundary_cfg.add_argument(
-    "--boundary_args",
-    type=float,
-    default=[],
-    nargs='*'
-)
-
-# # simulate Configs
-simulate_cfgs = parser_run.add_argument_group(title="Simulate Configs")
-simulate_cfgs.add_argument(
-    "--simulate_time", dest="endt",
-    type=float,
-    required=True
-)
-simulate_cfgs.add_argument(
-    "--simulate_delta_t", dest="dt",
-    type=float,
-    required=True
-)
-simulate_cfgs.add_argument(
-    "--run_with_show", action="store_true"
-)
-
-# # save configs
-save_cfg = parser_run.add_argument_group(title="Save Configs")
-
-save_cfg.add_argument(
-    "--save",
-    action="store_true",
-)
-
-save_cfg.add_argument(
-    "--save_format",
-    type=str,
-    default=constants.FORMAT_TXT,
-    choices=constants.SAVE_FORMATS
-)
-
-save_cfg.add_argument(
-    "--x_outfile",
-    type=str,
-)
-
-save_cfg.add_argument(
-    "--z_outfile",
-    type=str
-)
-
-save_cfg.add_argument(
-    "--save_times",
-)
-
-# ========================================================================== #
-
-# =========================== Show SFD Command ============================= #
-parser_draw = subparsers.add_parser(constants.COMMAND_SHOW, help="draw sfd format file")
-
-parser_draw.add_argument(
-    "--input_file",
-    type=str,
-    nargs="+"
-)
-
-parser_draw.add_argument(
-    "--file_format",
-    type=str,
-    choices=constants.SAVE_FORMATS
-)
-
-parser_draw.add_argument(
-    "--seg",
-    type=float
-)
-
-parser_draw.add_argument(
-    "--dpi",
-    type=float,
-    default=constants.FIG_DPI
-)
-# ========================================================================== #
-
-# =========================  Save SFD Command ============================== #
-parser_draw_gif = subparsers.add_parser("save_gif", help="save sfd file to gif")
-
-parser_draw_gif.add_argument(
-    "--input_file",
-    type=str,
-    nargs="+"
-)
-
-parser_draw_gif.add_argument(
-    "--file_format",
-    type=str,
-    choices=constants.SAVE_FORMATS,
-)
-
-parser_draw_gif.add_argument(
-    "--gif_name",
-    type=str
-)
-
-parser_draw_gif.add_argument(
-    "--vmax",
-    type=float
-)
-
-parser_draw_gif.add_argument(
-    "--vmin",
-    type=float
-)
-
-parser_draw_gif.add_argument(
-    "--fps",
-    type=int
-)
-
-parser_draw_gif.add_argument(
-    "--dpi",
-    type=float
-)
-
-argv = [
-    'run',
-    '--xmin',
-    '0',
-    '--xmax',
-    '1024',
-    '--nx',
-    '256',
-    '--zmin',
-    '0',
-    '--zmax',
-    '1024',
-    '--nz',
-    '256',
-    '--medium_type',
-    'I',
-    '--c_matrix',
-    '{"24300000": "...", "28500000": "(X>=100) & (X <= 900)"}',
-    '6075000',
-    "--source_x_args",
-    "40",
-    "--source_z_args",
-    "40",
-    "--simulate_time",
-    "0.2",
-    "--simulate_delta_t",
-    "2e-4",
-    "--save_times",
-    "10",
-    "--run_with_show"
-]
-
-# args = parser.parse_args(argv)
-
 if __name__ == "__main__":
-    args = parser.parse_args()
+    p = SeismicArgumentParser()
+    args = p.parse_args()
     d_args = vars(args)
     print("Read Arguments:\n", json.dumps(d_args, indent=2))
 
@@ -323,19 +26,19 @@ if __name__ == "__main__":
         # ************************** Run Command ***********************************
         # ========================== Medium Config Check ========================= #
         if any(i is None for i in [args.xmin, args.xmax, args.zmin, args.zmax]):
-            parser_run.error("All args in 'xmin', 'xmax', 'zmin', 'zmax' are required.")
+            p.parser_run.error("All args in 'xmin', 'xmax', 'zmin', 'zmax' are required.")
 
         if all(i is None for i in [args.nx, args.dx]):
-            parser_run.error("At lease one argument in 'nx', 'dx' are required.")
+            p.parser_run.error("At lease one argument in 'nx', 'dx' are required.")
 
         if all(i is None for i in [args.nz, args.dz]):
-            parser_run.error("At lease one argument in 'nz', 'dz' are required.")
+            p.parser_run.error("At lease one argument in 'nz', 'dz' are required.")
 
         if args.xmin >= args.xmax:
-            parser_run.error("arg 'xmax' must larger than arg 'xmin'.")
+            p.parser_run.error("arg 'xmax' must larger than arg 'xmin'.")
 
         if args.zmin >= args.zmax:
-            parser_run.error("arg 'zmax' must larger than arg 'zmin'.")
+            p.parser_run.error("arg 'zmax' must larger than arg 'zmin'.")
 
         if args.nx and not args.dx:
             args.dx = (args.xmax - args.xmin) / args.nx
@@ -370,8 +73,8 @@ if __name__ == "__main__":
         X, Z = np.meshgrid(X, Z)
 
         if len(args.c_matrix) != len(medium.required_c):
-            parser_run.error(f"medium type {medium.cfg.medium_type} require {len(medium.required_c)} c matrix, "
-                             f"but {len(args.c_matrix)} is given.")
+            p.parser_run.error(f"medium type {medium.cfg.medium_type} require {len(medium.required_c)} c matrix, "
+                               f"but {len(args.c_matrix)} is given.")
 
         # set c values
         medium_init_values = []
@@ -432,12 +135,12 @@ if __name__ == "__main__":
 
         if args.save:
             if any(i is None for i in [args.save_format, args.x_outfile, args.z_outfile, args.save_times]):
-                parser_run.error("The argument \"save\" is True, but one of argument in "
-                                 "\"save_format\", \"x_outfile\", \"z_outfile\" \"save_times\""
-                                 "is not be set.")
+                p.parser_run.error("The argument \"save\" is True, but one of argument in "
+                                   "\"save_format\", \"x_outfile\", \"z_outfile\" \"save_times\""
+                                   "is not be set.")
 
                 if type(args.save_times) not in [int, list]:
-                    parser_run.error("The argument \"save_times\" should be int or list.")
+                    p.parser_run.error("The argument \"save_times\" should be int or list.")
 
         sfd_x, sfd_z = wave_loop(
             s=simulator,
@@ -469,10 +172,10 @@ if __name__ == "__main__":
         elif len(datas) == 2:
             show_xz(*datas, args.seg, dpi=args.dpi, vmax=args.vmax, vmin=args.vmin)  # TODO: 可以通过参数更改图片大小
         else:
-            parser_draw.error("Input file should has one or two.")
+            p.parser_show.error("Input file should has one or two.")
 
     # Command draw gif
-    elif args.subcommand == constants.COMMAND_DRAW_GIF:
+    elif args.subcommand == constants.COMMAND_SAVE_GIF:
         files = args.input_file
         datas = [SFD(f, args.file_format) for f in files]
 
@@ -483,7 +186,22 @@ if __name__ == "__main__":
                 dpi=args.dpi
             )
         elif len(datas) == 2:
-            save_gif_xz(*datas, args.gif_name, args.fps, constants.TWO_FIG_SHAPE,
+            save_gif_xz(*datas, args.gif_name, fps=args.fps, figsize=constants.TWO_FIG_SHAPE,
                         dpi=args.dpi, vmax=args.vmax, vmin=args.vmin)
         else:
-            parser_draw_gif.error("Input file should has one or two.")
+            p.parser_save_gif.error("Input file should has one or two.")
+
+    elif args.subcommand == constants.COMMAND_SAVE_PNG:
+        files = args.input_file
+        datas = [SFD(f, args.file_format) for f in files]
+
+        if len(datas) == 1:
+            datas[0].save_png(
+                args.save_dir,
+                dpi=args.dpi
+            )
+        elif len(datas) == 2:
+            save_png_xz(*datas, args.save_dir, figsize=constants.TWO_FIG_SHAPE,
+                        dpi=args.dpi, vmax=args.vmax, vmin=args.vmin)
+        else:
+            p.parser_save_gif.error("Input file should has one or two.")
