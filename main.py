@@ -169,13 +169,13 @@ def main():
     )
     # # # x absorb length
     boundary_cfg.add_argument(
-        "--x_absort_length", dest='a',
+        "--x_absort_length",
         type=int,
         default=0
     )
     # # # z absorb length
     boundary_cfg.add_argument(
-        "--z_absort_length", dest='b',
+        "--z_absort_length",
         type=int,
         default=0
     )
@@ -239,6 +239,12 @@ def main():
         "--input_file",
         type=str,
         nargs="+"
+    )
+
+    parser_show.add_argument(
+        "--cmap",
+        type=str,
+        default="seismic"
     )
 
     parser_show.add_argument(
@@ -449,8 +455,8 @@ def main():
         boundary.set_parameter(
             args.nx,
             args.nz,
-            args.a,
-            args.b,
+            args.x_absort_length,
+            args.z_absort_length,
             *args.boundary_args
         )
         print(boundary)
@@ -491,7 +497,7 @@ def main():
             sfd_x.save(args.x_outfile, save_format=args.save_format)
             sfd_z.save(args.z_outfile, save_format=args.save_format)
 
-    # ******************************** Command show ********************************
+    # ******************************** Command show ********************************* #
     elif args.subcommand == constants.COMMAND_SHOW:
         files = args.input_file
         datas = [SFD(f, args.file_format) for f in files]
@@ -499,13 +505,15 @@ def main():
             datas[0].draw(
                 seg=args.seg,
                 dpi=args.dpi,
+                cmap=args.cmap,
             )
         elif len(datas) == 2:
-            show_xz(*datas, args.seg, dpi=args.dpi, vmax=args.vmax, vmin=args.vmin)  # TODO: 可以通过参数更改图片大小
+            show_xz(*datas, args.seg, dpi=args.dpi, vmax=args.vmax, vmin=args.vmin, cmap=args.cmap)
+            # TODO: 可以通过参数更改图片大小
         else:
             parser_show.error("Input file should has one or two.")
 
-    # ****************************** Command draw gif *******************************
+    # ****************************** Command draw gif ******************************* #
     elif args.subcommand == constants.COMMAND_SAVE_GIF:
         files = args.input_file
         datas = [SFD(f, args.file_format) for f in files]

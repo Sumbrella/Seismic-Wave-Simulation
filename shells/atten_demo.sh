@@ -1,4 +1,4 @@
-# simple demo for simulate 2D wave field on homogeneous isotropic medium.
+# simple demo for simulate 2D wave field on homogeneous isotropic medium with atten boundary.
 
 cd $(dirname $(dirname $(realpath "$0"))) || exit
 
@@ -14,8 +14,8 @@ python main.py run\
     --c12 6075000 \
     \
     --run_with_show \
-    --show_times 10 \
-    --simulate_time 0.2 \
+    --show_times 21 \
+    --simulate_time 0.25 \
     --simulate_delta_t 2e-4 \
     \
     --source_x_type ricker \
@@ -26,3 +26,8 @@ python main.py run\
     --save \
     --x_outfile data/test_x.sfd \
     --z_outfile data/test_z.sfd \
+    \
+    --boundary_type atten \
+    --x_absort_length 20 \
+    --z_absort_length 20 \
+    --boundary_args 0.0075

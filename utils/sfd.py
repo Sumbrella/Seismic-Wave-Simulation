@@ -148,7 +148,8 @@ class SFD:
             **kwargs
         )
 
-    def draw(self, figsize=constants.ONE_FIG_SHAPE, dpi=constants.FIG_DPI, seg=None, vmin=None, vmax=None):
+    def draw(self, figsize=constants.ONE_FIG_SHAPE, dpi=constants.FIG_DPI, seg=None, vmin=None, vmax=None,
+             *args, **kwargs):
         """
         The draw function is a simple animation of the SFD file.
         It plots each frame in the SFD file, one after another, with a pause between frames.
@@ -176,7 +177,7 @@ class SFD:
         print("drawing sfd file...")
         plt.figure(figsize=figsize, dpi=dpi)
         for _ in range(self.nt):
-            self.plot_frame(_, vmin=vmin, vmax=vmax)
+            self.plot_frame(_, vmin=vmin, vmax=vmax, *args, **kwargs)
             plt.xlabel("X")
             plt.ylabel("Z")
             plt.title(f"t={self.ts[_] : .2f}s")

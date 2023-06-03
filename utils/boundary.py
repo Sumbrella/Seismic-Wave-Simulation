@@ -57,8 +57,10 @@ class SolidBoundary(Boundary):
         self.v = None
         self.boundary_type = constants.BOUNDARY_SOLID
 
-    def set_parameter(self, n, m, a, b, v=0):
+    def set_parameter(self, n, m, a, b, v=None):
         super(SolidBoundary, self).set_parameter(n, m, a, b)
+        if v is None:
+            v = 0
         self.v = v
     
     def apply(self, u):
@@ -73,16 +75,20 @@ class AttenBoundary(Boundary):
     def __init__(self):
         super().__init__()
         self.alpha = None
-        self.GXLow = None
+        self.GXHigh = None
         self.GXLow = None
         self.GZHigh = None
         self.GZLow = None
 
         self.boundary_type = constants.BOUNDARY_ATTEN
 
-    def set_parameter(self, n, m, a, b, alpha=0.02):
+    def set_parameter(self, n, m, a, b, alpha=None):
         super().set_parameter(n, m, a, b)
+        if alpha is None:
+            alpha = 0.01
+        print("atten absort alpha value: {:.2f}".format(alpha))
         self.alpha = alpha
+
         self.GXHigh = np.exp(-(self.alpha * (self.a - self.absorbXLow[::-1]))**2)
         self.GXLow  = np.exp(-(self.alpha * (self.a - self.absorbXLow))**2)
         self.GZHigh = np.exp(-(self.alpha * (self.b - self.absorbZLow[::-1]))**2).reshape(-1, 1)

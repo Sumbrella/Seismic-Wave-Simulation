@@ -5,17 +5,20 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as anime
 
 import constants
-from tools import plot_frame
 from tools.plot_frame import plot_frame_xz
 from utils.sfd import SFD
 
 
-def show_xz(sfd_x: SFD, sfd_z: SFD,
-            seg=None,
-            figsize=None,
-            dpi=None,
-            vmin=None,
-            vmax=None):
+def show_xz(
+        sfd_x: SFD,
+        sfd_z: SFD,
+        seg=None,
+        figsize=None,
+        dpi=None,
+        vmin=None,
+        vmax=None,
+        *args, **kwargs
+):
     if seg is None:
         seg = constants.SHOW_SEG
     if figsize is None:
@@ -31,7 +34,7 @@ def show_xz(sfd_x: SFD, sfd_z: SFD,
     start_time = time.time()
     for i, t in enumerate(sfd_x.ts):
         print(f"\rprocess:{i + 1}/{sfd_x.nt}  runtime:{time.time() - start_time:.2f}s", end="")
-        plot_frame_xz(sfd_x.data[i], sfd_z.data[i], fig, t, vmin=vmin, vmax=vmax)
+        plot_frame_xz(sfd_x.data[i], sfd_z.data[i], fig, t, vmin=vmin, vmax=vmax, *args, **kwargs)
         plt.pause(seg)
         plt.cla()
         plt.clf()

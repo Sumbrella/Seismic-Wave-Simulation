@@ -43,8 +43,8 @@ class Medium(ABC):
         self.vpmax = np.max(np.sqrt(self.c11 / self.rho))
         self.vsmax = np.max(np.sqrt(self.c44 / self.rho))
 
-        print("Max P veclocity of this medium is: {:.3f}".format(self.vpmax))
-        print("Max S veclocity of this medium is: {:.3f}".format(self.vsmax))
+        print("Max P velocity of this medium is: {:.3f}".format(self.vpmax))
+        print("Max S velocity of this medium is: {:.3f}".format(self.vsmax))
 
     def _check_c_shape(self, c: np.ndarray, cname: str):
         assert len(c.shape) == 2, f"Input {cname} dimension is {len(c.shape)}, not 2D."
@@ -80,7 +80,6 @@ class IMedium(Medium):
         self.init_by_val(rho, c11, c12)
 
     def init_by_val(self, rho, c11, c12):
-        # C11 = \lambda + 2\mu   C12 = \lambda  C44 = \mu
         rho = np.asarray(rho)
         c11 = np.asarray(c11)
         c12 = np.asarray(c12)
