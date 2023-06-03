@@ -28,6 +28,6 @@ python main.py run\
     --z_outfile data/test_z.sfd \
     \
     --boundary_type atten \
-    --x_absort_length 20 \
-    --z_absort_length 20 \
-    --boundary_args 0.0075
+    --x_absorb_length 20 \
+    --z_absorb_length 20 \
+    --boundary_args 0.015

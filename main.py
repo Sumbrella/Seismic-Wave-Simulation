@@ -8,7 +8,7 @@ import numpy as np
 import constants
 import configparser
 from examples.draw_sfd import show_xz, save_gif_xz, save_png_xz
-from examples.wave_loop import wave_loop
+from examples.wave_loop import wave_loop, wave_loop_anti
 from tools import cover_cmat_arg_to_matrix
 from utils.medium import MediumConfig, Medium
 from utils.boundary import Boundary
@@ -124,11 +124,11 @@ def main():
     # # source configs
     source_cfg = parser_run.add_argument_group(title="Source Configs")
     source_cfg.add_argument(
-        "--source_x", dest="sx",
+        "--source_x",
         type=float
     )
     source_cfg.add_argument(
-        "--source_z", dest="sz",
+        "--source_z",
         type=float
     )
     source_cfg.add_argument(
@@ -160,6 +160,12 @@ def main():
     # # Boundary Configs
     boundary_cfg = parser_run.add_argument_group(title="Boundary Configs")
 
+    # # # use anti extension
+    boundary_cfg.add_argument(
+        "--use_anti_extension",
+        action="store_true"
+    )
+
     # # # Boundary Type
     boundary_cfg.add_argument(
         "--boundary_type", dest='boundary_type',
@@ -169,13 +175,13 @@ def main():
     )
     # # # x absorb length
     boundary_cfg.add_argument(
-        "--x_absort_length",
+        "--x_absorb_length",
         type=int,
         default=0
     )
     # # # z absorb length
     boundary_cfg.add_argument(
-        "--z_absort_length",
+        "--z_absorb_length",
         type=int,
         default=0
     )
@@ -353,8 +359,6 @@ def main():
     )
 
     args = parser.parse_args()
-    d_args = vars(args)
-    print("Read Arguments:\n", json.dumps(d_args, indent=2))
 
     if args.subcommand == constants.COMMAND_RUN:
         # ******************************** Run Command ***********************************
@@ -413,13 +417,11 @@ def main():
 
         # set c values
         medium_init_values = []
-        rho_value = cover_cmat_arg_to_matrix(args.rho, x, z)
-        print("Read rho, Value: {}".format(rho_value))
-        medium_init_values.append(rho_value)
-
-        for cmat_attr in medium.required_c:
+        # get all argument name by f.__code__.co_varnames, and the first argument is self, so pass this argument.
+        for cmat_attr in medium.init_by_val.__code__.co_varnames[1:]:
             if not getattr(args, cmat_attr):
                 parser_run.error(f"the following arguments are required: --{cmat_attr}")
+            # cover the argument cmat_attr to matrix
             cmat_value = cover_cmat_arg_to_matrix(getattr(args, cmat_attr), x, z)
             print("Read {}, Value: {}".format(cmat_attr, cmat_value))
             medium_init_values.append(cmat_value)
@@ -427,24 +429,24 @@ def main():
         medium.init_by_val(*medium_init_values)
 
         # ================== Create Source ================ #
-        if not args.sx:
-            args.sx = (args.xmax - args.xmin) / 2 + args.xmin
-            print("Don't read \"source_x\" argument, defaults to center of the medium: {:.2f}".format(args.sx))
-        if not args.sz:
-            args.sz = (args.zmax - args.zmin) / 2 + args.zmin
-            print("Don't read \"source_z\" argument, defaults to center of the medium: {:.2f}".format(args.sz))
+        if not args.source_x:
+            args.source_x = (args.xmax - args.xmin) / 2 + args.xmin
+            print("Don't read \"source_x\" argument, defaults to center of the medium: {:.2f}".format(args.source_x))
+        if not args.source_z:
+            args.source_z = (args.zmax - args.zmin) / 2 + args.zmin
+            print("Don't read \"source_z\" argument, defaults to center of the medium: {:.2f}".format(args.source_z))
 
         # cover source x, source z to index
-        sx = int(args.sx / args.dx)
-        sz = int(args.sz / args.dz)
+        source_x = int(args.source_x / args.dx)
+        source_z = int(args.source_z / args.dz)
 
         # get source func
         sx_func = get_source_func(args.source_x_type, *args.source_x_args)
         sz_func = get_source_func(args.source_z_type, *args.source_z_args)
 
         source = Source(
-            sx,
-            sz,
+            source_x,
+            source_z,
             sx_func,
             sz_func
         )
@@ -455,17 +457,25 @@ def main():
         boundary.set_parameter(
             args.nx,
             args.nz,
-            args.x_absort_length,
-            args.z_absort_length,
+            args.x_absorb_length,
+            args.z_absorb_length,
             *args.boundary_args
         )
         print(boundary)
 
         # ================= Create Simulator ================= #
+
+        if args.use_anti_extension:
+            args.use_anti_extension = eval(args.use_anti_extension)
+        if args.run_with_show:
+            print(args.run_with_sho)
+            args.run_with_show = eval(args.run_with_show)
+
         simulator = SeismicSimulator(
             medium=medium,
             source=source,
             boundary=boundary,
+            use_anti_extension=args.use_anti_extension,
             endt=args.simulate_time,
             dt=args.simulate_delta_t
         )
@@ -479,12 +489,23 @@ def main():
         if type(args.show_times) not in [int, list]:
             parser_run.error(f"The argument \"show_times\" should be int or list, but {type(args.show_times)}")
 
-        sfd_x, sfd_z = wave_loop(
-            s=simulator,
-            save_times=args.show_times,
-            is_save=args.save,
-            is_show=args.run_with_show
-        )
+        d_args = vars(args)
+        print("Read Arguments:\n", json.dumps(d_args, indent=2))
+
+        if not args.use_anti_extension:
+            sfd_x, sfd_z = wave_loop(
+                s=simulator,
+                save_times=args.show_times,
+                is_save=args.save,
+                is_show=args.run_with_show
+            )
+        else:
+            sfd_x, sfd_z = wave_loop_anti(
+                s=simulator,
+                save_times=args.show_times,
+                is_save=args.save,
+                is_show=args.run_with_show
+            )
 
         if args.save:
             if not os.path.exists(os.path.dirname(args.x_outfile)):
@@ -547,6 +568,6 @@ def main():
 
 
 if __name__ == '__main__':
-    # import sys
+    import sys
     # sys.argv = ['main.py', 'run', '--conf', 'configs/test.cfg']
     main()

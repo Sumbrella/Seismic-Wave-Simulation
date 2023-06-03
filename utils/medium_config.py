@@ -1,4 +1,5 @@
 import numpy as np
+from tools.psm import cal_psm_k
 
 
 class MediumConfig:
@@ -21,30 +22,13 @@ class MediumConfig:
         self.medium_type = medium_type
         self.shape = (self.nz, self.nx)
 
-        self.kx = self.cal_kx()
-        self.kz = self.cal_kz()
+        self.kx = cal_psm_k(self.nx, 2 * np.pi / (self.dx * self.nx))
+        self.kz = cal_psm_k(self.nz, 2 * np.pi / (self.dx * self.nx))
+
+        self.kx2 = cal_psm_k(self.nx * 2, np.pi / (self.dx * self.nx))
+        self.kz2 = cal_psm_k(self.nz * 2, np.pi / (self.dz * self.nz))
 
         self.show_parameters()
-
-    def cal_kx(self):
-        # return np.fft.fftfreq(self.nx, self.dx)
-        return np.array(
-            [
-                i * (np.pi / self.dx) / (self.nx / 2) if i <= self.nx / 2 else
-                i * (np.pi / self.dx) / (self.nx / 2) - 2 * np.pi / self.dx
-                for i in range(self.nx)
-            ]
-        )
-
-    def cal_kz(self):
-        # return np.fft.fftfreq(self.nz, self.dz)
-        return np.array(
-            [
-                i * (np.pi / self.dz) / (self.nz / 2) if i <= self.nz / 2 else
-                i * (np.pi / self.dz) / (self.nz / 2) - 2 * np.pi / self.dz
-                for i in range(self.nz)
-            ]
-        )
 
     def show_parameters(self):
         print(self)

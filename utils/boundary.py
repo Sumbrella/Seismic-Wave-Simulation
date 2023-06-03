@@ -89,10 +89,10 @@ class AttenBoundary(Boundary):
         print("atten absort alpha value: {:.2f}".format(alpha))
         self.alpha = alpha
 
-        self.GXHigh = np.exp(-(self.alpha * (self.a - self.absorbXLow[::-1]))**2)
-        self.GXLow  = np.exp(-(self.alpha * (self.a - self.absorbXLow))**2)
-        self.GZHigh = np.exp(-(self.alpha * (self.b - self.absorbZLow[::-1]))**2).reshape(-1, 1)
-        self.GZLow  = np.exp(-(self.alpha * (self.b - self.absorbZLow))**2).reshape(-1, 1)
+        self.GXHigh = np.exp(-(self.alpha * (self.a - self.absorbXLow[::-1])**2))
+        self.GXLow  = np.exp(-(self.alpha * (self.a - self.absorbXLow)**2))
+        self.GZHigh = np.exp(-(self.alpha * (self.b - self.absorbZLow[::-1])**2)).reshape(-1, 1)
+        self.GZLow  = np.exp(-(self.alpha * (self.b - self.absorbZLow)**2)).reshape(-1, 1)
     
     def apply(self, u):
         u[:, self.absorbXHigh] *= self.GXHigh

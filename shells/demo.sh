@@ -18,11 +18,12 @@ python main.py run\
     --simulate_time 0.2 \
     --simulate_delta_t 2e-4 \
     \
+    --source_x 300 \
+    --source_z 300 \
     --source_x_type ricker \
     --source_x_args 40 \
     --source_z_type ricker \
     --source_z_args 40 \
     \
-    --save \
     --x_outfile data/test_x.sfd \
     --z_outfile data/test_z.sfd \
