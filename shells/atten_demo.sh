@@ -2,7 +2,13 @@
 
 cd $(dirname $(dirname $(realpath "$0"))) || exit
 
-python main.py run\
+python main.py 
+    run \
+    --run_with_show \
+    --show_times 21 \
+    --simulate_time 0.25 \
+    --simulate_delta_t 2e-4 \
+    \
     --xmin 0 \
     --xmax 1024 \
     --nx 256 \
@@ -12,11 +18,6 @@ python main.py run\
     --medium_type I \
     --c11 24300000 \
     --c12 6075000 \
-    \
-    --run_with_show \
-    --show_times 21 \
-    --simulate_time 0.25 \
-    --simulate_delta_t 2e-4 \
     \
     --source_x_type ricker \
     --source_x_args 40 \

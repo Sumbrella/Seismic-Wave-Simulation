@@ -2,7 +2,13 @@
 
 cd $(dirname $(dirname $(realpath "$0"))) || exit
 
-python main.py run\
+python main.py \
+    run \
+    --run_with_show \
+    --simulate_time 0.2 \
+    --simulate_delta_t 2e-4 \
+    --show_times 10 \
+    \
     --xmin 0 \
     --xmax 1024 \
     --nx 256 \
@@ -20,10 +26,6 @@ python main.py run\
     --source_z_type none \
     --source_x_args 40 \
     --source_z_args 40 \
-    \
-    --simulate_time 0.2 \
-    --simulate_delta_t 2e-4 \
-    --save_times 10 \
     \
     --save \
     --x_outfile data/test_x.sfd \

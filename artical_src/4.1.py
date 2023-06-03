@@ -39,7 +39,6 @@ mcfg = MediumConfig(
     dz,
     'VTI'
 )
-
 print(mcfg)
 
 

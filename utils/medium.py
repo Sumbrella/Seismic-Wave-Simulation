@@ -52,6 +52,7 @@ class Medium(ABC):
         for c_attr in self.required_c:
             if not hasattr(self, c_attr):
                 AttributeError(f"Error: medium need {c_attr} matrix member, but input don't provide.")
+            print(f"Setting {c_attr}, value: {kwargs.get(c_attr)}")
             setattr(self, c_attr, kwargs.get(c_attr))
 
     def _check_c_shape(self, c: np.ndarray, cname: str):
@@ -134,6 +135,9 @@ class VTIMedium(Medium):
         super().__init__(cfg, *args, **kwargs)
         self.required_c.append("c33")
         self.c33 = None
+        self.required_c.append("c12")
+        self.c12 = None
+        print(self.required_c)
 
     def load_file(self):
         pass  # TODO
@@ -176,6 +180,8 @@ class VTIMedium(Medium):
 class HTIMedium(Medium):
     def __init__(self, cfg: MediumConfig, *args, **kwargs):
         super().__init__(cfg, *args, **kwargs)
+        self.required_c.append("c12")
+        self.c12 = None
         self.required_c.append("c33")
         self.c33 = None
         self.required_c.append("c55")
