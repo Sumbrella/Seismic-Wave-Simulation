@@ -80,8 +80,7 @@ def get_parser():
     )
     # # # rho
     medium_cfg.add_argument(
-        '--rho',
-        default=2.7,
+        '--rho'
     )
     # # # C Argument
     medium_cfg.add_argument(
@@ -144,20 +143,17 @@ def get_parser():
     boundary_cfg.add_argument(
         "--boundary_type", dest='boundary_type',
         type=str,
-        default=constants.BOUNDARY_SOLID,
         choices=constants.BOUNDARY_TYPES
     )
     # # # x absorb length
     boundary_cfg.add_argument(
         "--x_absorb_length",
         type=int,
-        default=0
     )
     # # # z absorb length
     boundary_cfg.add_argument(
         "--z_absorb_length",
         type=int,
-        default=0
     )
     # # # Other arguments of absorb func
     boundary_cfg.add_argument(
@@ -218,6 +214,7 @@ def get_parser():
     parser_show.add_argument(
         "--file_format",
         type=str,
+        default=constants.FORMAT_TXT,
         choices=constants.SAVE_FORMATS
     )
     parser_show.add_argument(

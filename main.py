@@ -18,36 +18,28 @@ from utils.source import Source, get_source_func
 
 def main():
     parser, parser_run, parser_show, parser_save_gif, parser_save_png = get_parser()
-
     args = parser.parse_args()
-
+    d_args = vars(args)
+    print("Input argments:", json.dumps(d_args, indent=2))
     if args.subcommand == constants.COMMAND_RUN:
         # ******************************** Run Command ***********************************
         # ========================== Medium Config Check ========================= #
         if any(i is None for i in [args.xmin, args.xmax, args.zmin, args.zmax]):
             parser_run.error("All args in 'xmin', 'xmax', 'zmin', 'zmax' are required.")
-
         if all(i is None for i in [args.nx, args.dx]):
             parser_run.error("At lease one argument in 'nx', 'dx' are required.")
-
         if all(i is None for i in [args.nz, args.dz]):
             parser_run.error("At lease one argument in 'nz', 'dz' are required.")
-
         if args.xmin >= args.xmax:
             parser_run.error("arg 'xmax' must larger than arg 'xmin'.")
-
         if args.zmin >= args.zmax:
             parser_run.error("arg 'zmax' must larger than arg 'zmin'.")
-
         if args.nx and not args.dx:
             args.dx = (args.xmax - args.xmin) / args.nx
-
         if args.nz and not args.dz:
             args.dz = (args.zmax - args.zmin) / args.nz
-
         if args.dx and not args.nx:
             args.nx = int(np.ceil((args.xmax - args.xmin)) / args.dx)
-
         if args.dz and not args.nz:
             args.nz = int(np.ceil((args.zmax - args.zmin) / args.dz))
 
@@ -124,10 +116,9 @@ def main():
         print(boundary)
 
         # ================= Create Simulator ================= #
-
-        if type(args.use_anti_extension) == 'str':
+        if type(args.use_anti_extension) == str:
             args.use_anti_extension = eval(args.use_anti_extension)
-        if type(args.run_with_show) == 'str':
+        if type(args.run_with_show) == str:
             args.run_with_show = eval(args.run_with_show)
 
         simulator = SeismicSimulator(
@@ -149,7 +140,7 @@ def main():
             parser_run.error(f"The argument \"show_times\" should be int or list, but {type(args.show_times)}")
 
         d_args = vars(args)
-        print("Read Arguments:\n", json.dumps(d_args, indent=2))
+        print("Parsed Arguments:\n", json.dumps(d_args, indent=2))
 
         if not args.use_anti_extension:
             sfd_x, sfd_z = wave_loop(
@@ -159,6 +150,7 @@ def main():
                 is_show=args.run_with_show
             )
         else:
+            print("Running with anti extension")
             sfd_x, sfd_z = wave_loop_anti(
                 s=simulator,
                 save_times=args.show_times,

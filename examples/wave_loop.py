@@ -78,6 +78,7 @@ def wave_loop(
                     save_times[j],
                     vmin=vmin if vmin else -np.percentile(s.ux, 99) * 7.5,
                     vmax=vmax if vmax else np.percentile(s.ux, 99) * 7.5,
+                    extent=[s.medium.cfg.xmin, s.medium.cfg.xmax, s.medium.cfg.zmin, s.medium.cfg.zmax],
                     **kwargs
                 )
                 plt.pause(seg)
@@ -158,6 +159,7 @@ def wave_loop_anti(
                     save_times[j],
                     vmin=vmin if vmin else -np.percentile(s.ux, 99) * 7.5,
                     vmax=vmax if vmax else np.percentile(s.ux, 99) * 7.5,
+                    extent=[s.medium.cfg.xmin, s.medium.cfg.xmax, s.medium.cfg.zmax, s.medium.cfg.zmin],
                     **kwargs
                 )
                 plt.pause(seg)

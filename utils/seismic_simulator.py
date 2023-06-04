@@ -27,7 +27,6 @@ class SeismicSimulator:
             space_domain_method: str = 'PSM',  # TODO: ADD METHODS
             use_anti_extension: bool = False
     ):
-
         self.medium = medium
         self.boundary = boundary
         self.source = source

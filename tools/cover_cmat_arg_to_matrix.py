@@ -14,8 +14,9 @@ def cover_cmat_arg_to_matrix(cmat_arg, x, z):
     try:
         cmat_arg = json.loads(cmat_arg)
         cmat_value = np.zeros_like(x)
-        for value, func in cmat_arg.items():
-            cmat_value[eval(func)] = value
+        for value, field in cmat_arg.items():
+            field = field.lower()
+            cmat_value[eval(field)] = value
         return cmat_value
     except ValueError:
         ...

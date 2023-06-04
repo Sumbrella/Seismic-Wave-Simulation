@@ -34,7 +34,14 @@ def show_xz(
     start_time = time.time()
     for i, t in enumerate(sfd_x.ts):
         print(f"\rprocess:{i + 1}/{sfd_x.nt}  runtime:{time.time() - start_time:.2f}s", end="")
-        plot_frame_xz(sfd_x.data[i], sfd_z.data[i], fig, t, vmin=vmin, vmax=vmax, *args, **kwargs)
+        plot_frame_xz(
+            sfd_x.data[i], sfd_z.data[i], 
+            fig, t, 
+            vmin=vmin, vmax=vmax, 
+            extent=[sfd_x.xmin, sfd_x.xmax, sfd_x.zmin, sfd_x.zmax],
+            *args, **kwargs
+        )
+
         plt.pause(seg)
         plt.cla()
         plt.clf()
