@@ -9,7 +9,7 @@ pip install -r requirements.txt
 ```
 # Useage
 ```
-python main.py --conf configs/test.cfg
+python main.py run --conf configs/test.cfg
 ```
 
 you can change parameter in test.cfg
