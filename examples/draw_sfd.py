@@ -1,5 +1,6 @@
 import time
 import os
+from typing import List
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as anime
@@ -38,10 +39,9 @@ def show_xz(
             sfd_x.data[i], sfd_z.data[i], 
             fig, t, 
             vmin=vmin, vmax=vmax, 
-            extent=[sfd_x.xmin, sfd_x.xmax, sfd_x.zmin, sfd_x.zmax],
+            extent=[sfd_x.xmin, sfd_x.xmax, sfd_x.zmax, sfd_x.zmin],
             *args, **kwargs
         )
-
         plt.pause(seg)
         plt.cla()
         plt.clf()
@@ -69,7 +69,8 @@ def save_gif_xz(sfd_x: SFD, sfd_z: SFD, fname=None, fps=None, figsize=None, dpi=
     with writer.saving(fig, fname, dpi):
         for i, t in enumerate(sfd_x.ts):
             print(f"\rprocess:{i + 1}/{sfd_x.nt}  runtime:{time.time() - start_time:.2f}s", end="")
-            plot_frame_xz(sfd_x.data[i], sfd_z.data[i], fig, t, vmin=vmin, vmax=vmax)
+            plot_frame_xz(sfd_x.data[i], sfd_z.data[i], fig, t, vmin=vmin, vmax=vmax,
+                          extent=[sfd_x.xmin, sfd_x.xmax, sfd_x.zmax, sfd_x.zmin])
             writer.grab_frame()
             plt.cla()
             plt.clf()
@@ -97,7 +98,17 @@ def save_png_xz(sfd_x: SFD, sfd_z: SFD, save_dir=None, figsize=None, dpi=None, v
     fig = plt.figure(figsize=figsize, dpi=dpi)
     for i, t in enumerate(sfd_x.ts):
         print(f"\rprocess:{i + 1}/{sfd_x.nt}  runtime:{time.time() - start_time:.2f}s", end="")
-        plot_frame_xz(sfd_x.data[i], sfd_z.data[i], fig, t, vmin=vmin, vmax=vmax)
+        plot_frame_xz(sfd_x.data[i], sfd_z.data[i], fig, t, vmin=vmin, vmax=vmax,
+                      extent=[sfd_x.xmin, sfd_x.xmax, sfd_x.zmax, sfd_z.zmim]
+        )
         plt.savefig(os.path.join(save_dir, f"{i}"))
         plt.cla()
         plt.clf()
+
+
+def show_points(datas: List[SFD], x, z):
+    n = len(datas)
+    for i, data in enumerate(datas):
+        plt.subplot(n, 1, i + 1)
+        data.show_point(x, z)
+    plt.show()
