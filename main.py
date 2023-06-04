@@ -111,7 +111,7 @@ def main():
             args.nz,
             args.x_absorb_length,
             args.z_absorb_length,
-            *args.boundary_args
+            args.absorb_alpha
         )
         print(boundary)
 

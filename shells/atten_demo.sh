@@ -31,4 +31,4 @@ python main.py
     --boundary_type atten \
     --x_absorb_length 20 \
     --z_absorb_length 20 \
-    --boundary_args 0.015
+    --absorb_alpha 0.015

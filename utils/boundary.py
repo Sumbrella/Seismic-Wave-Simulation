@@ -26,7 +26,6 @@ class Boundary(ABC):
 
         self.boundary_type = None
     
-    # 这里不能使用抽象方法，子类无法通过该函数修改父类变量
     def set_parameter(self, n, m, a, b):
         self.n = n
         self.m = m
@@ -85,14 +84,14 @@ class AttenBoundary(Boundary):
     def set_parameter(self, n, m, a, b, alpha=None):
         super().set_parameter(n, m, a, b)
         if alpha is None:
-            alpha = 0.01
+            alpha = 0.15
         print("atten absort alpha value: {:.2f}".format(alpha))
         self.alpha = alpha
 
-        self.GXHigh = np.exp(-(self.alpha * (self.a - self.absorbXLow[::-1])**2))
-        self.GXLow  = np.exp(-(self.alpha * (self.a - self.absorbXLow)**2))
-        self.GZHigh = np.exp(-(self.alpha * (self.b - self.absorbZLow[::-1])**2)).reshape(-1, 1)
-        self.GZLow  = np.exp(-(self.alpha * (self.b - self.absorbZLow)**2)).reshape(-1, 1)
+        self.GXHigh = np.exp(-(self.alpha * (self.a - self.absorbXLow[::-1]))**2)
+        self.GXLow  = np.exp(-(self.alpha * (self.a - self.absorbXLow))**2)
+        self.GZHigh = np.exp(-(self.alpha * (self.b - self.absorbZLow[::-1]))**2).reshape(-1, 1)
+        self.GZLow  = np.exp(-(self.alpha * (self.b - self.absorbZLow))**2).reshape(-1, 1)
     
     def apply(self, u):
         u[:, self.absorbXHigh] *= self.GXHigh

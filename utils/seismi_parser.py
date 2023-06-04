@@ -16,20 +16,36 @@ def get_parser():
         '-v',
         '--version',
         action='version',
-        version='%(prog)s' + constants.__version__,
+        version='%(prog)s ' + constants.__version__,
         help='显示版本信息'
     )
     # ============================= Command Run ================================= #
-    parser_run = subparsers.add_parser(constants.COMMAND_RUN, help='run simulation')
-    parser_run.add_argument("--conf", type=str)
-    args, remaining_argv = parser_run.parse_known_args()
+    parser_run  = subparsers.add_parser(constants.COMMAND_RUN, help='run simulation')
+
+    parser_conf = argparse.ArgumentParser(add_help=False)
+    parser_conf.add_argument("--subcommand", type=str)
+    parser_conf.add_argument("--conf", type=str)
+    args, remaining_argv = parser_conf.parse_known_args()        
+
     values = {}
     if args.conf:
         config = configparser.ConfigParser()
         config.read([args.conf])
         for section in config.sections():
             values.update(dict(config.items(section)))
+    
     parser_run.set_defaults(**values)
+    parser_run.add_argument("--conf", type=str)
+
+    # args, remaining_argv = parser_run.parse_known_args()
+    # values = {}
+    # if args.conf:
+    #     config = configparser.ConfigParser()
+    #     config.read([args.conf])
+    #     for section in config.sections():
+    #         values.update(dict(config.items(section)))
+    # parser_run.set_defaults(**values)
+    
     # # Medium Config
     medium_cfg = parser_run.add_argument_group(title="Medium Config")
     # # # Min Value of x-axis
@@ -157,10 +173,8 @@ def get_parser():
     )
     # # # Other arguments of absorb func
     boundary_cfg.add_argument(
-        "--boundary_args",
-        type=float,
-        default=[],
-        nargs='*'
+        "--absorb_alpha",
+        type=float
     )
     # # simulate Configs
     simulate_cfgs = parser_run.add_argument_group(title="Simulate Configs")
@@ -269,7 +283,7 @@ def get_parser():
     )
     # ========================================================================== #
     # =========================  Save Png Command ============================== #
-    parser_save_png = subparsers.add_parser(constants.COMMAND_SAVE_PNG)
+    parser_save_png = subparsers.add_parser(constants.COMMAND_SAVE_PNG, help="save sfd file into pngs")
     parser_save_png.add_argument(
         "--input_file",
         type=str,
