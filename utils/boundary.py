@@ -57,6 +57,11 @@ class SolidBoundary(Boundary):
         self.boundary_type = constants.BOUNDARY_SOLID
 
     def set_parameter(self, n, m, a, b, v=None):
+        if a is None:
+            a = 0
+        if b is None:
+            b = 0
+            
         super(SolidBoundary, self).set_parameter(n, m, a, b)
         if v is None:
             v = 0

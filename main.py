@@ -5,8 +5,8 @@ import os
 import numpy as np
 
 import constants
-from examples.draw_sfd import show_xz, save_gif_xz, save_png_xz
-from examples.wave_loop import wave_loop, wave_loop_anti
+from examples.draw_sfd import show_xz, save_gif_xz, save_png_xz, show_points
+from examples.wave_loop import wave_loop
 from tools import cover_cmat_arg_to_matrix
 from utils.seismi_parser import get_parser
 from utils.medium import MediumConfig, Medium
@@ -105,6 +105,8 @@ def main():
         print(source)
 
         # ================== Create Boundary ================ #
+        if args.boundary_type is None:
+            args.boundary_type = constants.BOUNDARY_SOLID
         boundary = Boundary.get_boundary(args.boundary_type)
         boundary.set_parameter(
             args.nx,
@@ -120,6 +122,8 @@ def main():
             args.use_anti_extension = eval(args.use_anti_extension)
         if type(args.run_with_show) == str:
             args.run_with_show = eval(args.run_with_show)
+        if type(args.save) == str:
+            args.save = eval(args.save)
 
         simulator = SeismicSimulator(
             medium=medium,
@@ -131,32 +135,32 @@ def main():
         )
 
         if args.save:
-            if any(i is None for i in [args.save_format, args.x_outfile, args.z_outfile]):
+            if any(i is None for i in [args.save_times, args.save_format, args.x_outfile, args.z_outfile]):
                 parser_run.error("The argument \"save\" is True, but one of argument in "
-                                 "\"save_format\", \"x_outfile\", \"z_outfile\" "
+                                 "\"save_format\", \"x_outfile\", \"z_outfile\" \"show_times\""
                                  "is not be set.")
-        args.show_times = eval(args.show_times)
-        if type(args.show_times) not in [int, list]:
-            parser_run.error(f"The argument \"show_times\" should be int or list, but {type(args.show_times)}")
+
+            args.save_times = eval(args.save_times)
+            if type(args.save_times) not in [int, list]:
+                parser_run.error(f"The argument \"save_times\" should be int or list, but {type(args.show_times)}")
+        if args.run_with_show:
+            args.show_times = eval(args.show_times)
+            if type(args.show_times) not in [int, list]:
+                parser_run.error(f"The argument \"show_times\" should be int or list, but {type(args.show_times)}")
 
         d_args = vars(args)
         print("Parsed Arguments:\n", json.dumps(d_args, indent=2))
 
-        if not args.use_anti_extension:
-            sfd_x, sfd_z = wave_loop(
-                s=simulator,
-                save_times=args.show_times,
-                is_save=args.save,
-                is_show=args.run_with_show
-            )
-        else:
-            print("Running with anti extension")
-            sfd_x, sfd_z = wave_loop_anti(
-                s=simulator,
-                save_times=args.show_times,
-                is_save=args.save,
-                is_show=args.run_with_show
-            )
+
+        sfd_x, sfd_z = wave_loop(
+            s=simulator,
+            use_anti_extension=args.use_anti_extension,
+            show_times=args.show_times,
+            save_times=args.save_times,
+            is_save=args.save,
+            is_show=args.run_with_show
+        )
+
 
         if args.save:
             if not os.path.exists(os.path.dirname(args.x_outfile)):
@@ -216,6 +220,13 @@ def main():
                         dpi=args.dpi, vmax=args.vmax, vmin=args.vmin)
         else:
             parser_save_png.error("Input file should has one or two.")
+    
+    elif args.subcommand == constants.COMMAND_SHOW_POINT:
+        files = args.input_file
+        datas = [SFD(f, args.file_format) for f in files]
+        show_points(datas, args.x, args.z)
+
+ 
 
 
 if __name__ == '__main__':

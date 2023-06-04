@@ -37,15 +37,6 @@ def get_parser():
     parser_run.set_defaults(**values)
     parser_run.add_argument("--conf", type=str)
 
-    # args, remaining_argv = parser_run.parse_known_args()
-    # values = {}
-    # if args.conf:
-    #     config = configparser.ConfigParser()
-    #     config.read([args.conf])
-    #     for section in config.sections():
-    #         values.update(dict(config.items(section)))
-    # parser_run.set_defaults(**values)
-    
     # # Medium Config
     medium_cfg = parser_run.add_argument_group(title="Medium Config")
     # # # Min Value of x-axis
@@ -150,11 +141,6 @@ def get_parser():
     )
     # # Boundary Configs
     boundary_cfg = parser_run.add_argument_group(title="Boundary Configs")
-    # # # use anti extension
-    boundary_cfg.add_argument(
-        "--use_anti_extension",
-        action="store_true"
-    )
     # # # Boundary Type
     boundary_cfg.add_argument(
         "--boundary_type", dest='boundary_type',
@@ -178,6 +164,7 @@ def get_parser():
     )
     # # simulate Configs
     simulate_cfgs = parser_run.add_argument_group(title="Simulate Configs")
+    
     simulate_cfgs.add_argument(
         "--simulate_time",
         type=float
@@ -186,21 +173,34 @@ def get_parser():
         "--simulate_delta_t",
         type=float
     )
+
+    simulate_cfgs.add_argument(
+        "--use_anti_extension",
+        action="store_true"
+    )
+
     simulate_cfgs.add_argument(
         "--run_with_show", action="store_true"
     )
+
+    simulate_cfgs.add_argument(
+        "--show_times"
+    )
+
     # # save configs
     save_cfg = parser_run.add_argument_group(title="Save Configs")
     save_cfg.add_argument(
         "--save",
         action="store_true",
     )
+    
     save_cfg.add_argument(
         "--save_format",
         type=str,
         default=constants.FORMAT_TXT,
         choices=constants.SAVE_FORMATS
     )
+
     save_cfg.add_argument(
         "--x_outfile",
         type=str,
@@ -209,8 +209,9 @@ def get_parser():
         "--z_outfile",
         type=str
     )
+
     save_cfg.add_argument(
-        "--show_times",
+        "--save_times",
     )
     # ========================================================================== #
     # =========================== Show SFD Command ============================= #
@@ -309,6 +310,28 @@ def get_parser():
     parser_save_png.add_argument(
         "--dpi",
         type=float
+    )
+
+    # ======================================================================== # 
+
+    # ======================== Show Point Command ============================ # 
+    parser_show_point = subparsers.add_parser(constants.COMMAND_SHOW_POINT, help="show one point seismic record.")
+    parser_show_point.add_argument(
+        "--input_file",
+        nargs="+"
+    )
+    parser_show_point.add_argument(
+        "--file_format",
+        type=str,
+        choices=constants.SAVE_FORMATS
+    )
+    parser_show_point.add_argument(
+        "--x",
+        type=int
+    )
+    parser_show_point.add_argument(
+        "--z",
+        type=int
     )
 
     return parser, parser_run, parser_show, parser_save_gif, parser_save_png
