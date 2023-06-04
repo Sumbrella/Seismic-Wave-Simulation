@@ -236,3 +236,5 @@ if __name__ == '__main__':
     import sys
     # sys.argv = ["main.py", "run", "--conf", "configs/test.cfg"]
     main()
+
+# ZYC without ZhiYin
