@@ -143,6 +143,7 @@ def main():
             args.save_times = eval(args.save_times)
             if type(args.save_times) not in [int, list]:
                 parser_run.error(f"The argument \"save_times\" should be int or list, but {type(args.show_times)}")
+                
         if args.run_with_show:
             args.show_times = eval(args.show_times)
             if type(args.show_times) not in [int, list]:

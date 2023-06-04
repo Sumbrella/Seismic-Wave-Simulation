@@ -48,11 +48,12 @@ def wave_loop(
     if use_anti_extension:
         print("Running with anti extension.")
     nt = int(s.endt / s.dt)
-
-    save_time_index, save_times = parse_save_times(nt, s, save_times)
-    show_time_index, show_times = parse_save_times(nt, s, show_times)
-    print("target frame to save:", save_times)
-    print("target frame to show:", show_times)
+    if is_save:
+        save_time_index, save_times = parse_save_times(nt, s, save_times)
+        print("target frame to save:", save_times)
+    if is_show:
+        show_time_index, show_times = parse_save_times(nt, s, show_times)
+        print("target frame to show:", show_times)
 
     start_time = time.time()
 
