@@ -27,6 +27,6 @@ python main.py \
     --source_z_type ricker \
     --source_z_args 40 \
     \
-    --save \
-    --x_outfile data/test_x.sfd \
-    --z_outfile data/test_z.sfd \
+    # --save \
+    # --x_outfile data/test_x.sfd \
+    # --z_outfile data/test_z.sfd \
