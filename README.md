@@ -5,7 +5,7 @@
 Download the code and change to the project dir:
 run command:
 ```
-pip install -r requirment.txt
+pip install -r requirements.txt
 ```
 # Useage
 ```
