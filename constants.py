@@ -3,10 +3,11 @@
 __version__ = "1.0.0"
 
 # # arg commands
-COMMAND_RUN  = "run"
-COMMAND_SHOW = "show"
-COMMAND_SAVE_GIF = "save_gif"
-COMMAND_SAVE_PNG = "save_png"
+COMMAND_RUN        = "run"
+COMMAND_SHOW       = "show"
+COMMAND_SAVE_GIF   = "save_gif"
+COMMAND_SAVE_PNG   = "save_png"
+COMMAND_SHOW_POINT = "show_point"
 
 # # medium type constants
 I_MEDIUM   = "I"

@@ -97,7 +97,8 @@ class SFD:
             A dictionary of the attributes
         """
         if ext is None:
-            ext = get_file_ext(file)
+            ext = constants.FORMAT_TXT
+        
         if ext == constants.FORMAT_TXT:
             with open(file, "r") as fp:
                 self.nx, self.nz, self.nt = [int(i) for i in fp.readline().split()]
@@ -206,6 +207,7 @@ class SFD:
 
     def save_sfd(self, fname):
         """
+        # TODO: change binary save func
         The save_sfd function saves the data in a .sfd file.
 
         Args:
@@ -319,3 +321,15 @@ class SFD:
             plt.clf()
 
         print("\nDone!")
+
+    def show_point(self, x, z):
+        x_index = int(x / self.dx)
+        z_index = int(z / self.dz)
+
+        record = self.data[:, z_index, x_index]
+
+        plt.plot(
+            record
+        )
+
+        return record
