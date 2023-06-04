@@ -333,3 +333,48 @@ class SFD:
         )
 
         return record
+
+    def show_section(
+        self,
+        axis,
+        value,
+        *args,
+        **kwargs
+    ):
+        if type(axis) == str:
+            if axis == 'x':
+                axis = 1
+            elif axis == 'z':
+                axis = 0
+            else:
+                ValueError("The value of axis in function show_section should be 'x' or 'z'")
+
+        if axis == 0:
+            value = int(value / self.dz)
+            section = self.data[:, value, :]
+            plt.imshow(
+                section,
+                *args,
+                aspect='auto',
+                extent=[self.zmin, self.zmax, self.nt, 0],
+                vmax=np.percentile(section, 99),
+                vmin=-np.percentile(section, 99),
+                **kwargs
+            )
+
+        elif axis == 1:
+            value = int(value / self.dx)
+            section = self.data[:, :, value]
+            plt.imshow(
+                section,
+                *args,
+                aspect='auto',
+                extent=[self.xmin, self.xmax, self.nt, 0],
+                vmax=np.percentile(section, 99) * 5,
+                vmin=-np.percentile(section, 99) * 5,
+                **kwargs
+            )
+        else:
+            section = None
+
+        plt.show()

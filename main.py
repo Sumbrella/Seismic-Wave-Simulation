@@ -151,7 +151,6 @@ def main():
         d_args = vars(args)
         print("Parsed Arguments:\n", json.dumps(d_args, indent=2))
 
-
         sfd_x, sfd_z = wave_loop(
             s=simulator,
             use_anti_extension=args.use_anti_extension,
@@ -160,7 +159,6 @@ def main():
             is_save=args.save,
             is_show=args.run_with_show
         )
-
 
         if args.save:
             if not os.path.exists(os.path.dirname(args.x_outfile)):
@@ -226,7 +224,11 @@ def main():
         datas = [SFD(f, args.file_format) for f in files]
         show_points(datas, args.x, args.z)
 
- 
+    elif args.subcommand == constants.COMMAND_SHOW_SECTION:
+        # TODO: 增加arg检查
+        file = args.input_file
+        data = SFD(file, args.file_format)
+        data.show_section(args.axis, args.value, cmap=args.cmap)
 
 
 if __name__ == '__main__':

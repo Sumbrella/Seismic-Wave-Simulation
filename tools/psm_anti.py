@@ -1,4 +1,3 @@
-from numpy.fft import fft2, ifft2
 import numpy as np
 
 

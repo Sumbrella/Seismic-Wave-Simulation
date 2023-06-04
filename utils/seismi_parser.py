@@ -5,7 +5,6 @@ import constants
 
 
 def get_parser():
-    global parser, parser_run, parser_show, parser_save_gif
     parser = argparse.ArgumentParser(
         prog='seismi',
         description='',  # TODO Add description
@@ -332,6 +331,29 @@ def get_parser():
     parser_show_point.add_argument(
         "--z",
         type=int
+    )
+
+    # ======================== Show Point Command ============================ #
+    parser_show_section = subparsers.add_parser(constants.COMMAND_SHOW_SECTION, help="show one section seismic record.")
+    parser_show_section.add_argument(
+        "--input_file"
+    )
+    parser_show_section.add_argument(
+        "--file_format",
+        type=str,
+        choices=constants.SAVE_FORMATS
+    )
+    parser_show_section.add_argument(
+        "--axis",
+        choices=["x", "z"]
+    )
+    parser_show_section.add_argument(
+        "--value",
+        type=float
+    )
+    parser_show_section.add_argument(
+        "--cmap",
+        type=str,
     )
 
     return parser, parser_run, parser_show, parser_save_gif, parser_save_png
