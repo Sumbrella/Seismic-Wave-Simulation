@@ -14,7 +14,7 @@ def get_ricker(fm):
 ## parameters
 xmin, xmax = 0, 1280
 zmin, zmax = 0, 1280
-tmin, tmax = 0, 0.3
+tmin, tmax = 0, 0.13
 dx, dz, dt = 4, 4, 2e-4
 fm = 40
 
@@ -33,13 +33,13 @@ C11 = 4500**2 * 3.8 * np.ones((nx, nz))
 C12 = 4500**2 / 3 * 3.8 * np.ones((nx, nz))
 rho = 3.8 * np.ones((nx, nz))
 
-C11[Z>=500] = 3500**2 * 2.8
-C12[Z>=500] = 3500**2 * 2.8
-rho[Z>=500] = 2.8
+C11[Z>=600] = 3500**2 * 2.8
+C12[Z>=600] = 3500**2 * 2.8
+rho[Z>=600] = 2.8
 
-C11[(Z>=500) & (Z<=700) & (X>=520) & (X<=760)] = 4500**2 * 3.8
-C12[(Z>=500) & (Z<=700) & (X>=520) & (X<=760)] = 4500**2 * 3.8 / 3
-rho[(Z>=500) & (Z<=700) & (X>=520) & (X<=760)] = 3.8
+C11[(Z>=600) & (Z<=800) & (X>=520) & (X<=760)] = 4500**2 * 3.8
+C12[(Z>=600) & (Z<=800) & (X>=520) & (X<=760)] = 4500**2 * 3.8 / 3
+rho[(Z>=600) & (Z<=800) & (X>=520) & (X<=760)] = 3.8
 
 mcfg = MediumConfig(
     xmin,
@@ -54,42 +54,28 @@ mcfg = MediumConfig(
 print(mcfg)
 
 
-s = Source(nx//2, 60, get_ricker(fm), get_ricker(fm))
+s = Source(nx//2, int(500 / dx), get_ricker(fm), get_ricker(fm))
 
 m = Medium.get_medium(mcfg)
 m.init_by_val(
     rho, C11, C12
 )
 
-# b = Boundary.getBoundary("solid")
-# b.set_parameter(nx, nz, 0, 0)
+b = Boundary.get_boundary("solid")
+b.set_parameter(nx, nz, 0, 0)
 
-b = Boundary.get_boundary("atten")
-b.set_parameter(nx, nz, 20, 20, 0.015)
+# b = Boundary.get_boundary("atten")
+# b.set_parameter(nx, nz, 20, 20, 0.015)
     
-simulator = SeismicSimulator(m, s, b, dt, tmax)
+simulator = SeismicSimulator(m, s, b, dt, tmax, use_anti_extension=True)
 
 datax, dataz = wave_loop(
     simulator,
-    30,
-    is_show=True
+    show_times=20,
+    save_times=50,
+    is_show=True,
+    use_anti_extension=True
 )
 
-datax.save_txt("../data/exp/3_3x.sfd")
-dataz.save_txt("../data/exp/3_3z.sfd")
-
-plt.subplot(121)
-datax.plot_frame(0)
-
-plt.subplot(122)
-dataz.plot_frame(0)
-
-plt.show()
-
-plt.subplot(121)
-datax.plot_frame(1)
-
-plt.subplot(122)
-dataz.plot_frame(1)
-
-plt.show()
+datax.save_txt("data/exp/3_3x.sfd")
+dataz.save_txt("data/exp/3_3z.sfd")

@@ -88,11 +88,3 @@ datax, dataz = wave_loop(
 
 datax.save_txt("./data/exp/4_2x.sfd")
 dataz.save_txt("./data/exp/4_2z.sfd")
-
-plt.subplot(121)
-datax.plot_frame(0)
-
-plt.subplot(122)
-dataz.plot_frame(0)
-
-plt.show()

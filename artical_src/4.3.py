@@ -14,7 +14,7 @@ def get_ricker(fm):
 ## parameters
 xmin, xmax = 0, 1024
 zmin, zmax = 0, 1024
-tmin, tmax = 0, 0.2
+tmin, tmax = 0, 0.1
 dx, dz, dt = 4, 4, 2e-4
 fm = 30
 
@@ -48,11 +48,10 @@ C13 = rho * np.sqrt((alpha1**2 - beta1**2) * ((1 + 2 * delta1) * alpha1**2 - bet
 C33 = rho * alpha1**2
 C44 = rho * beta1**2
 
-C11[(X<400) | (X>624)] = rho[(X<400) | (X>624)] * (1 + 2 * epsilon1) * alpha2 **2
-C13[(X<400) | (X>624)] = rho[(X<400) | (X>624)] * np.sqrt((alpha2**2 - beta2**2) * ((1 + 2 * delta1) * alpha2**2 - beta2**2)) - rho[(X<400) | (X>624)] * beta2**2
-C33[(X<400) | (X>624)] = rho[(X<400) | (X>624)] * alpha2**2
-C44[(X<400) | (X>624)] = rho[(X<400) | (X>624)] * beta2**2
-
+C11[(X<350) | (X>674)] = rho[(X<350) | (X>674)] * (1 + 2 * epsilon1) * alpha2 **2
+C13[(X<350) | (X>674)] = rho[(X<350) | (X>674)] * np.sqrt((alpha2**2 - beta2**2) * ((1 + 2 * delta1) * alpha2**2 - beta2**2)) - rho[(X<350) | (X>674)] * beta2**2
+C33[(X<350) | (X>674)] = rho[(X<350) | (X>674)] * alpha2**2
+C44[(X<350) | (X>674)] = rho[(X<350) | (X>674)] * beta2**2
 
 
 mcfg = MediumConfig(
@@ -85,17 +84,10 @@ simulator = SeismicSimulator(m, s, b, dt, tmax)
 
 datax, dataz = wave_loop(
     simulator,
-    30,
+    show_times=15,
+    save_times=50,
     is_show=True
 )
 
-datax.save_txt("../data/exp/4_3x.sfd")
-dataz.save_txt("../data/exp/4_3z.sfd")
-
-plt.subplot(121)
-datax.plot_frame(0)
-
-plt.subplot(122)
-dataz.plot_frame(0)
-
-plt.show()
+datax.save_txt("data/exp/4_3x.sfd")
+dataz.save_txt("data/exp/4_3z.sfd")

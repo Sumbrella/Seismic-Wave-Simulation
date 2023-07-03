@@ -14,7 +14,7 @@ def get_ricker(fm):
 ## parameters
 xmin, xmax = 0, 2560
 zmin, zmax = 0, 2560
-tmin, tmax = 0, 0.2
+tmin, tmax = 0, 0.15
 dx, dz, dt = 10, 10, 2e-4
 fm = 30
 
@@ -83,7 +83,8 @@ simulator = SeismicSimulator(m, s, b, dt, tmax)
 
 datax, dataz = wave_loop(
     simulator,
-    41,
+    show_times=20,
+    save_times=50,
     is_show=True
 )
 
