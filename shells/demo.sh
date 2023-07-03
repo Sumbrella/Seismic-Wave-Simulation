@@ -16,6 +16,7 @@ python main.py \
     --zmax 1024 \
     --nz 256 \
     --medium_type I \
+    --rho 2.7 \
     --c11 24300000 \
     --c12 6075000 \
     \
@@ -26,5 +27,5 @@ python main.py \
     --source_z_type ricker \
     --source_z_args 40 \
     \
-    --x_outfile data/test_x.sfd \
-    --z_outfile data/test_z.sfd \
+    # --x_outfile data/test_x.sfd \
+    # --z_outfile data/test_z.sfd \
