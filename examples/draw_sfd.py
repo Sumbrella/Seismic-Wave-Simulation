@@ -46,6 +46,14 @@ def show_xz(
         plt.cla()
         plt.clf()
 
+    plot_frame_xz(
+        sfd_x.data[i], sfd_z.data[i], 
+        fig, t, 
+        vmin=vmin, vmax=vmax, 
+        extent=[sfd_x.xmin, sfd_x.xmax, sfd_x.zmax, sfd_x.zmin],
+        *args, **kwargs
+    )
+    plt.show()
 
 def save_gif_xz(sfd_x: SFD, sfd_z: SFD, fname=None, fps=None, figsize=None, dpi=None, vmin=None, vmax=None):
     if fname is None:
@@ -104,6 +112,10 @@ def save_png_xz(sfd_x: SFD, sfd_z: SFD, save_dir=None, figsize=None, dpi=None, v
         plt.savefig(os.path.join(save_dir, f"{i}"))
         plt.cla()
         plt.clf()
+    plot_frame_xz(sfd_x.data[i], sfd_z.data[i], fig, t, vmin=vmin, vmax=vmax,
+                  extent=[sfd_x.xmin, sfd_x.xmax, sfd_x.zmax, sfd_z.zmim]
+    )
+    plt.savefig(os.path.join(save_dir, f"{i}"))
 
 
 def show_points(datas: List[SFD], x, z):

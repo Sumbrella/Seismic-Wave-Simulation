@@ -176,7 +176,6 @@ class VTIMedium(Medium):
             ])
 
 
-
 class HTIMedium(Medium):
     def __init__(self, cfg: MediumConfig, *args, **kwargs):
         super().__init__(cfg, *args, **kwargs)

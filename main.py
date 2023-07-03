@@ -20,7 +20,7 @@ def main():
     parser, parser_run, parser_show, parser_save_gif, parser_save_png = get_parser()
     args = parser.parse_args()
     d_args = vars(args)
-    print("Input argments:", json.dumps(d_args, indent=2))
+    print("Input arguments:", json.dumps(d_args, indent=2))
     if args.subcommand == constants.COMMAND_RUN:
         # ******************************** Run Command ***********************************
         # ========================== Medium Config Check ========================= #
@@ -186,7 +186,7 @@ def main():
             show_xz(*datas, args.seg, dpi=args.dpi, vmax=args.vmax, vmin=args.vmin, cmap=args.cmap)
             # TODO: 可以通过参数更改图片大小
         else:
-            parser_show.error("Input file should has one or two.")
+            parser_show.error("Input file should be one or two.")
 
     # ****************************** Command draw gif ******************************* #
     elif args.subcommand == constants.COMMAND_SAVE_GIF:
@@ -203,7 +203,7 @@ def main():
             save_gif_xz(*datas, args.gif_name, fps=args.fps, figsize=constants.TWO_FIG_SHAPE,
                         dpi=args.dpi, vmax=args.vmax, vmin=args.vmin)
         else:
-            parser_save_gif.error("Input file should has one or two.")
+            parser_save_gif.error("Input file should be one or two.")
 
     elif args.subcommand == constants.COMMAND_SAVE_PNG:
         files = args.input_file

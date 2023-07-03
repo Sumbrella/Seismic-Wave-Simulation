@@ -117,7 +117,6 @@ def get_parser():
     source_cfg.add_argument(
         "--source_x_type",
         type=str,
-        default=constants.SOURCE_RICKER,
         choices=constants.SOURCE_TYPES
     )
     source_cfg.add_argument(
@@ -129,7 +128,6 @@ def get_parser():
     source_cfg.add_argument(
         "--source_z_type",
         type=str,
-        default=constants.SOURCE_RICKER,
         choices=constants.SOURCE_TYPES
     )
     source_cfg.add_argument(

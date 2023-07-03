@@ -1,5 +1,6 @@
 import os
 import time
+import struct
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,25 +15,22 @@ class SFD:
     Seismic forward simulation data format.
     The txt format like this: 
     -------------------------------------------------------
-    nx, nz, nt
-    xmin, xmax
-    zmin, zmax
-    t1
+    nx nz nt
+    xmin xmax
+    zmin zmax
+    t1 t2 t3 t4 ... tn
     data(t1, x1, z1) data(t1, x2, z1) ... data(t1, xn, z1)
     ......................................................
     ......................................................
     data(t1, x1, zn) data(t1, x2, zn) ... data(t1, xn, zn)
-    t2
     data(t2, x1, z1) data(t2, x2, z1) ... data(t2, xn, z1)
     ......................................................
     ......................................................
     data(t2, x1, zn) data(t2, x2, zn) ... data(t2, xn, zn)
-    t3
     ......................................................
     ......................................................
     ......................................................
     ......................................................
-    tn
     data(tn, x1, z1) data(tn, x2, z1) ... data(tn, xn, z1)
     ......................................................
     ......................................................
@@ -41,11 +39,12 @@ class SFD:
     
     """
 
-    def __init__(self, file=None, ext=None, *, xmin=None, xmax=None, zmin=None, zmax=None, ts=None, u=None):
+    def __init__(self, file=None, fmt=None, *, xmin=None, xmax=None, zmin=None, zmax=None, ts=None, u=None):
         """initialize
 
         Args:
-            file (str, optional) .: .sfd file to be read, if None you should provide other arguments. Defaults to None.
+            file (str, optional) : .sfd file to be read, if None you should provide other arguments. Defaults to None.
+            fmt  (str, optional) : .sfd file format. choice in ['txt', 'bin'].
             If the file is None, you should provide follow arguments.
             xmin (float, optional): the min value of x-axis. Defaults to None.
             xmax (float, optional): the max value of x-axis. Defaults to None.
@@ -53,6 +52,12 @@ class SFD:
             zmax (float, optional): the max value of z-axis. Defaults to None.
             u (numpy.array, optional): 3D array, with shape(nt, nz, nx). Defaults to None.
         """
+        if fmt is None:
+            fmt = 'txt'
+
+        if fmt not in constants.SAVE_FORMATS:
+            ValueError("SFD file format {} are not support. Choice in {}.".format(fmt, constants.SAVE_FORMATS))
+
         self.xmin = None
         self.xmax = None
 
@@ -69,7 +74,7 @@ class SFD:
         self.data = None
 
         if file is not None:
-            self.read_from_file(file, ext)
+            self.read_from_file(file, fmt)
         else:
             self.xmin = xmin
             self.xmax = xmax
@@ -81,25 +86,25 @@ class SFD:
             self.dx = (self.xmax - self.xmin) / self.nx
             self.dz = (self.zmax - self.zmin) / self.nz
 
-        self.vmax = np.percentile(self.data, 99) * 7.5
-        self.vmin = -self.vmax
+        self.vmax = np.percentile(self.data, 99) * 7.5  # maximum value for colorbar
+        self.vmin = -self.vmax                          # minimum value for colorbar
 
-    def read_from_file(self, file, ext=None):
+    def read_from_file(self, file, fmt=None):
         """
         The read_from_file function reads in a file and stores the data into an object.
 
         Args:
             self: Represent the instance of the class
             file: Specify the file to read from
-            ext: Specify the file extension
+            fmt: Specify the file format
 
         Returns:
             A dictionary of the attributes
         """
-        if ext is None:
-            ext = constants.FORMAT_TXT
+        if fmt is None:
+            fmt = constants.FORMAT_TXT
         
-        if ext == constants.FORMAT_TXT:
+        if fmt == constants.FORMAT_TXT:
             with open(file, "r") as fp:
                 self.nx, self.nz, self.nt = [int(i) for i in fp.readline().split()]
                 self.xmin, self.xmax = [float(i) for i in fp.readline().split()]
@@ -109,20 +114,32 @@ class SFD:
                 self.dz = (self.zmax - self.zmin) / (self.nz - 1)
                 self.data = np.zeros((self.nt, self.nz, self.nx))
 
-                self.ts = np.ones(self.nt)
+                self.ts = [float(i) for i in fp.readline().split()]
 
                 for _ in range(self.nt):
-                    ti = float(fp.readline())
-                    self.ts[_] = ti
                     tmp = np.zeros((self.nz, self.nx))
                     for i in range(self.nz):
                         tmp[i] = [float(i) for i in fp.readline().split()]
                     self.data[_] = tmp.copy()
 
-        elif ext == constants.FORMAT_SFD:
-            dc = np.load(file, "r")
-            for key, value in dc:
-                setattr(self, key, value)
+        elif fmt == constants.FORMAT_BIN:
+            with open(file, "rb") as fp:
+                version = ".".join([str(i) for i in np.frombuffer(fp.read(12), dtype='i')])
+                print("reading file {}, version:{}".format(file, version))
+                float_size = np.frombuffer(fp.read(4), dtype='i')[0]
+                if float_size == 4:
+                    float_fmt = "f"
+                elif float_size == 8:
+                    float_fmt = "d"
+                else:
+                    ValueError("float size of {} can not match".format(float_size))
+                self.nx, self.nz, self.nt = np.frombuffer(fp.read(12), dtype='i')
+                self.xmin, self.xmax, self.zmin, self.zmax = np.frombuffer(fp.read(16), dtype='f')
+                self.ts = np.frombuffer(fp.read(self.nt * float_size), dtype=float_fmt)
+                self.data = np.frombuffer(fp.read(float_size * self.nx * self.nz * self.nt), dtype=float_fmt)\
+                    .reshape([self.nt, self.nz, self.nx])
+            self.dx = (self.xmax - self.xmin) / (self.nx - 1)
+            self.dz = (self.zmax - self.zmin) / (self.nz - 1)
         else:
             TypeError("Save Extension Not Support.")
 
@@ -177,7 +194,9 @@ class SFD:
 
         print("drawing sfd file...")
         plt.figure(figsize=figsize, dpi=dpi)
+        start_time = time.time()
         for _ in range(self.nt):
+            print(f"\rcurrent_time: {self.ts[_]:.3f},  runtime: {time.time() - start_time:.3f}s", end="")
             self.plot_frame(_, vmin=vmin, vmax=vmax, *args, **kwargs)
             plt.xlabel("X")
             plt.ylabel("Z")
@@ -185,7 +204,7 @@ class SFD:
             plt.pause(seg)
             plt.cla()
             plt.clf()
-        print("Done!")
+        print("\nDone!")
 
     def save(self, fname, save_format=constants.FORMAT_TXT):
         """
@@ -200,12 +219,37 @@ class SFD:
         """
         if save_format == constants.FORMAT_TXT:
             self.save_txt(fname)
-        elif save_format == constants.FORMAT_SFD:
-            self.save_sfd(fname)
+        elif save_format == constants.FORMAT_BIN:
+            self.save_bin(fname)
         else:
             TypeError("Save format: {} not support.".format(save_format))
 
-    def save_sfd(self, fname):
+    def save_txt(self, fname):
+        """
+        The save_txt function saves the data in a text file.
+
+        Args:
+            fname: Specify the file name to save the data into.
+
+        Returns:
+            None
+        """
+        print(f"saving into file {fname}")
+        st = time.time()
+        with open(fname, "w+") as fp:
+            fp.write(f"{self.nx} {self.nz} {self.nt}\n")
+            fp.write(f"{self.xmin} {self.xmax}\n")
+            fp.write(f"{self.zmin} {self.zmax}\n")
+            for i in range(self.nt):
+                fp.write(str(self.nt[i]) + " ")
+            fp.write("\b\n")
+            for i in range(self.nt):
+                for j in range(self.nz):
+                    fp.write(" ".join([str(v) for v in self.data[i, j, :]]) + "\n")
+
+        print("\nDone!")
+
+    def save_bin(self, fname):
         """
         # TODO: change binary save func
         The save_sfd function saves the data in a .sfd file.
@@ -218,11 +262,35 @@ class SFD:
             None
         """
         file_ext = get_file_ext(fname)
-        if file_ext != constants.FORMAT_SFD:
-            fname = fname + constants.FORMAT_SFD
+        if file_ext != ".sfd":
+            fname = fname + ".sfd"
         print(f"saving into file {fname}")
-        dc = props(self)
-        np.save(fname, dc)
+
+        with open(fname, "wb") as fp:
+            # sfd_type = np.dtype([
+            #     ('version', [('0', np.int), ('1', np.int), ('2', np.int)]),
+            #     ('float_size', np.int),
+            #     ('nx', np.int),
+            #     ('nz', np.int),
+            #     ('nt', np.int),
+            #     ('xmin', np.float),
+            #     ('xmax', np.float),
+            #     ('zmin', np.float),
+            #     ('zmax', np.float),
+            # ])
+
+            for v in constants.__version__.split("."):
+                fp.write(struct.pack("i", int(v)))                   # version id
+            fp.write(struct.pack("i", self.data.dtype.itemsize))     # length of one float number
+            fp.write(struct.pack("i", self.nx))
+            fp.write(struct.pack("i", self.nz))
+            fp.write(struct.pack("i", self.nt))
+            fp.write(struct.pack("f", self.xmin))
+            fp.write(struct.pack("f", self.xmax))
+            fp.write(struct.pack("f", self.zmin))
+            fp.write(struct.pack("f", self.zmax))
+            fp.write(self.ts.tobytes())
+            fp.write(self.data.tobytes())
 
     def save_gif(self, fname=None, dpi=None, fps=None):
         """
@@ -258,31 +326,6 @@ class SFD:
                 writer.grab_frame()
                 plt.cla()
                 plt.clf()
-        print("\nDone!")
-
-    def save_txt(self, fname):
-        """
-        The save_txt function saves the data in a text file.
-
-        Args:
-            fname: Specify the file name to save the data into.
-
-        Returns:
-            None
-        """
-        print(f"saving into file {fname}")
-        st = time.time()
-        with open(fname, "w+") as fp:
-            fp.write(f"{self.nx} {self.nz} {self.nt}\n")
-            fp.write(f"{self.xmin} {self.xmax}\n")
-            fp.write(f"{self.zmin} {self.zmax}\n")
-
-            for i in range(self.nt):
-                print(f"\r{i + 1}/{self.nt} {time.time() - st:.3f}s", end="")
-                fp.write(f"{self.ts[i]}\n")
-                for j in range(self.nz):
-                    fp.write(" ".join([str(v) for v in self.data[i, j, :]]) + "\n")
-
         print("\nDone!")
 
     def save_png(self, save_dir, figsize=None, dpi=None):

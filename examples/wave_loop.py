@@ -88,8 +88,8 @@ def wave_loop(
             plot_z = s.uz if not use_anti_extension else (s.uz + s.an_uz) / 2
 
             plot_frame_xz(
-                plot_x if not use_anti_extension else (s.ux + s.an_ux) / 2,
-                plot_z if not use_anti_extension else (s.uz + s.an_uz) / 2,
+                plot_x,
+                plot_z,
                 fig,
                 show_times[show_j],
                 vmin=vmin if vmin else -np.percentile(plot_x, 99) * 7.5,
@@ -103,6 +103,21 @@ def wave_loop(
             plt.clf()
 
             show_j += 1
+        
+    if is_show:
+        plot_x = s.ux if not use_anti_extension else (s.ux + s.an_ux) / 2
+        plot_z = s.uz if not use_anti_extension else (s.uz + s.an_uz) / 2
+        plot_frame_xz(
+            plot_x,
+            plot_z,
+            fig,
+            s.current_t,
+            vmin=vmin if vmin else -np.percentile(plot_x, 99) * 7.5,
+            vmax=vmax if vmax else np.percentile(plot_x, 99) * 7.5,
+            extent=[s.medium.cfg.xmin, s.medium.cfg.xmax, s.medium.cfg.zmax, s.medium.cfg.zmin],
+            **kwargs
+        )
+        plt.show()
 
 
     print("\nSimulation Done!")
