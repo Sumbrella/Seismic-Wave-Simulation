@@ -31,26 +31,28 @@ def parse_save_times(nt, s, save_times):
 
 def wave_loop(
         s: SeismicSimulator,
-        show_times: Union[List[float], int], 
-        save_times: Union[List[float], int]=None,
         use_anti_extension: bool = False,
         is_show: bool = True,
-        is_save: bool = True,
+        show_times: Union[List[float], int] = None,
+        is_save: bool = False,
+        save_times: Union[List[float], int] = None,
         seg: float = None,
         vmin: float = None,
         vmax: float = None,
         **kwargs,
 ):
-    if not save_times:
-        save_times = show_times
     if seg is None:
         seg = constants.SHOW_SEG
     if use_anti_extension:
         print("Running with anti extension.")
     nt = int(s.endt / s.dt)
+
     if is_save:
+        if save_times is None:
+            save_times = int(np.sqrt((s.endt / s.dt)) * 10)
         save_time_index, save_times = parse_save_times(nt, s, save_times)
         print("target frame to save:", save_times)
+
     if is_show:
         show_time_index, show_times = parse_save_times(nt, s, show_times)
         print("target frame to show:", show_times)

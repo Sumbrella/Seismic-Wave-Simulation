@@ -105,43 +105,53 @@ class SFD:
             fmt = constants.FORMAT_TXT
         
         if fmt == constants.FORMAT_TXT:
-            with open(file, "r") as fp:
-                self.nx, self.nz, self.nt = [int(i) for i in fp.readline().split()]
-                self.xmin, self.xmax = [float(i) for i in fp.readline().split()]
-                self.zmin, self.zmax = [float(i) for i in fp.readline().split()]
-
-                self.dx = (self.xmax - self.xmin) / (self.nx - 1)
-                self.dz = (self.zmax - self.zmin) / (self.nz - 1)
-                self.data = np.zeros((self.nt, self.nz, self.nx))
-
-                self.ts = [float(i) for i in fp.readline().split()]
-
-                for _ in range(self.nt):
-                    tmp = np.zeros((self.nz, self.nx))
-                    for i in range(self.nz):
-                        tmp[i] = [float(i) for i in fp.readline().split()]
-                    self.data[_] = tmp.copy()
-
+            try:
+                open(file, "r")
+            except UnicodeDecodeError:
+                self.read_bin(file)
+            else:
+                self.read_txt(file)
         elif fmt == constants.FORMAT_BIN:
-            with open(file, "rb") as fp:
-                version = ".".join([str(i) for i in np.frombuffer(fp.read(12), dtype='i')])
-                print("reading file {}, version:{}".format(file, version))
-                float_size = np.frombuffer(fp.read(4), dtype='i')[0]
-                if float_size == 4:
-                    float_fmt = "f"
-                elif float_size == 8:
-                    float_fmt = "d"
-                else:
-                    ValueError("float size of {} can not match".format(float_size))
-                self.nx, self.nz, self.nt = np.frombuffer(fp.read(12), dtype='i')
-                self.xmin, self.xmax, self.zmin, self.zmax = np.frombuffer(fp.read(16), dtype='f')
-                self.ts = np.frombuffer(fp.read(self.nt * float_size), dtype=float_fmt)
-                self.data = np.frombuffer(fp.read(float_size * self.nx * self.nz * self.nt), dtype=float_fmt)\
-                    .reshape([self.nt, self.nz, self.nx])
+            self.read_bin(file)
+        else:
+            TypeError("file format do not Support.")
+
+    def read_bin(self, file):
+        with open(file, "rb") as fp:
+            version = ".".join([str(i) for i in np.frombuffer(fp.read(12), dtype='i')])
+            print("reading file {}, version:{}".format(file, version))
+            float_size = np.frombuffer(fp.read(4), dtype='i')[0]
+            if float_size == 4:
+                float_fmt = "f"
+            elif float_size == 8:
+                float_fmt = "d"
+            else:
+                ValueError("float size of {} can not match".format(float_size))
+            self.nx, self.nz, self.nt = np.frombuffer(fp.read(12), dtype='i')
+            self.xmin, self.xmax, self.zmin, self.zmax = np.frombuffer(fp.read(16), dtype='f')
+            self.ts = np.frombuffer(fp.read(self.nt * float_size), dtype=float_fmt)
+            self.data = np.frombuffer(fp.read(float_size * self.nx * self.nz * self.nt), dtype=float_fmt) \
+                .reshape([self.nt, self.nz, self.nx])
+        self.dx = (self.xmax - self.xmin) / (self.nx - 1)
+        self.dz = (self.zmax - self.zmin) / (self.nz - 1)
+
+    def read_txt(self, file):
+        with open(file, "r") as fp:
+            self.nx, self.nz, self.nt = [int(i) for i in fp.readline().split()]
+            self.xmin, self.xmax = [float(i) for i in fp.readline().split()]
+            self.zmin, self.zmax = [float(i) for i in fp.readline().split()]
+
             self.dx = (self.xmax - self.xmin) / (self.nx - 1)
             self.dz = (self.zmax - self.zmin) / (self.nz - 1)
-        else:
-            TypeError("Save Extension Not Support.")
+            self.data = np.zeros((self.nt, self.nz, self.nx))
+
+            self.ts = [float(i) for i in fp.readline().split()]
+
+            for _ in range(self.nt):
+                tmp = np.zeros((self.nz, self.nx))
+                for i in range(self.nz):
+                    tmp[i] = [float(i) for i in fp.readline().split()]
+                self.data[_] = tmp.copy()
 
     def plot_frame(self, index, *args, **kwargs):
         """
@@ -241,7 +251,7 @@ class SFD:
             fp.write(f"{self.xmin} {self.xmax}\n")
             fp.write(f"{self.zmin} {self.zmax}\n")
             for i in range(self.nt):
-                fp.write(str(self.nt[i]) + " ")
+                fp.write(str(self.ts[i]) + " ")
             fp.write("\b\n")
             for i in range(self.nt):
                 for j in range(self.nz):
