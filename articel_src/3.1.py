@@ -44,7 +44,7 @@ mcfg = MediumConfig(
 
 print(mcfg)
 
-s = Source(nx // 2, nz // 2, lambda t: 0, get_ricker(fm))
+s = Source(nx // 2, nz // 2, get_ricker(fm), get_ricker(fm))
 
 m = Medium.get_medium(mcfg)
 m.init_by_val(
@@ -61,16 +61,11 @@ simulator = SeismicSimulator(m, s, b, dt, tmax)
 
 datax, dataz = wave_loop(
     simulator,
-    [0.18]
+    is_show=True,
+    show_times=20,
+    is_save=True,
+    save_times=20
 )
 
 datax.save_txt("../data/exp/3_1x.sfd")
 dataz.save_txt("../data/exp/3_1z.sfd")
-
-plt.subplot(121)
-datax.plot_frame(0)
-
-plt.subplot(122)
-dataz.plot_frame(0)
-
-plt.show()

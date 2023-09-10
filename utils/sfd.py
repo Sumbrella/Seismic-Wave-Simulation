@@ -245,19 +245,18 @@ class SFD:
             None
         """
         print(f"saving into file {fname}")
-        st = time.time()
         with open(fname, "w+") as fp:
             fp.write(f"{self.nx} {self.nz} {self.nt}\n")
             fp.write(f"{self.xmin} {self.xmax}\n")
             fp.write(f"{self.zmin} {self.zmax}\n")
-            for i in range(self.nt):
+            for i in range(self.nt - 1):
                 fp.write(str(self.ts[i]) + " ")
-            fp.write("\b\n")
+            fp.write(str(self.ts[self.nt-1]) + "\n")
             for i in range(self.nt):
                 for j in range(self.nz):
                     fp.write(" ".join([str(v) for v in self.data[i, j, :]]) + "\n")
 
-        print("\nDone!")
+        print("Done!")
 
     def save_bin(self, fname):
         """
