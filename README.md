@@ -18,7 +18,7 @@ run command:
 ```
 pip install -r requirements.txt
 ```
-# Useage
+# Usage
 ## Run program by config file
 You can simply run the test simulation by the following command
 ```
